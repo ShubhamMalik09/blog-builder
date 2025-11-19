@@ -1,11 +1,16 @@
 import React from 'react'
 
 const VideoBlock = ({ block, updateBlock }) => {
-  const hasVideo = block.content && block.content.startsWith("data:video");
+    const updateVideo = (file) => {
+        if (!file) return;
+
+        const url = URL.createObjectURL(file); // 🔥 FAST + NO BASE64
+        updateBlock(block.id, url);
+    };
 
     return (
         <div className="w-full">
-            {hasVideo ? (
+            {block.content ? (
                 <video
                 src={block.content}
                 controls
@@ -18,19 +23,7 @@ const VideoBlock = ({ block, updateBlock }) => {
                     type="file"
                     accept="video/*"
                     className="hidden"
-                    onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-
-                    const reader = new FileReader();
-                    reader.onload = (evt) => {
-                        const base64 = evt.target.result;
-                        if (base64 && base64.startsWith("data:video")) {
-                        updateBlock(block.id, base64);
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                    }}
+                    onChange={(e) => updateVideo(e.target.files[0])}
                 />
                 </label>
             )}

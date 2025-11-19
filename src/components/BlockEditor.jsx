@@ -13,7 +13,23 @@ export default function BlockEditor({ blogId, setBlocks, blocks }) {
   const [showBlockMenu, setShowBlockMenu] = useState(null)
 
   const updateBlock = (id, content) => {
-    setBlocks(blocks.map(b => b.id === id ? { ...b, content } : b))
+    setBlocks(blocks.map(b => {
+      if (b.id !== id) return b;
+
+      // special case: content is an object
+      if (typeof b.content === "object" && b.content !== null) {
+        return { 
+          ...b, 
+          content: { 
+            ...b.content, 
+            ...content 
+          }
+        };
+      }
+
+      // normal blocks (string content)
+      return { ...b, content: content };
+    }))
   }
 
   const deleteBlock = (id) => {
@@ -23,10 +39,24 @@ export default function BlockEditor({ blogId, setBlocks, blocks }) {
   }
 
   const addBlock = (type, afterId) => {
-    const newBlock = {
-      id: Date.now(),
-      type,
-      content: getDefaultContent(type)
+    let newBlock;
+    if (type === "text-image" || type === "image-text") {
+      newBlock = {
+        id: Date.now(),
+        type,
+        content: {
+          text: "",
+          image: ""
+        }
+      };
+    } 
+    else {
+      // all normal blocks
+      newBlock = {
+        id: Date.now(),
+        type,
+        content: getDefaultContent(type)
+      };
     }
     
     const index = blocks.findIndex(b => b.id === afterId)

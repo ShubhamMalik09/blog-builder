@@ -48,8 +48,62 @@ export default function MarkdownRenderer({ blogId }) {
       <main className="max-w-4xl mx-auto px-6 py-12">
         <article className="bg-white rounded-xl shadow-sm p-8 md:p-12">
           <div className="prose prose-lg max-w-none">
+            <style>{`
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                display: block;
+                overflow-x: auto;
+                margin: 24px 0;
+              }
+              td, th {
+                border: 1px solid #e2e2e2;
+                padding: 16px;
+                vertical-align: top;
+              }
+              td img {
+                max-width: 100%;
+                border-radius: 12px;
+              }
+            `}</style>
             <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              urlTransform={(url) => {
+                if (url.startsWith("data:image/")) return url;
+                if (url.startsWith("data:video/")) return url;
+                return url;
+              }}
               components={{
+                table: ({node, ...props}) => (
+                  <table {...props} className="rounded-lg shadow-sm" />
+                ),
+                tr: ({node, ...props}) => <tr {...props} />,
+                th: ({node, ...props}) => (
+                  <th className="bg-gray-100 text-gray-800 font-semibold" {...props} />
+                ),
+                td: ({node, ...props}) => (
+                  <td className="align-top" {...props} />
+                ),
+                img: ({node, ...props}) => {
+                  if (!props.src) return null
+                  return (
+                    <img 
+                      className="rounded-xl my-4 max-w-full border border-gray-200 shadow"
+                      {...props}
+                    />
+                  )
+                },
+                video: ({node, ...props}) => {
+                  if (!props.src) return null
+                  return (
+                    <video
+                      className="rounded-lg max-w-full my-4"
+                      controls
+                      {...props}
+                    />
+                  )
+                },
                 h1: ({node, ...props}) => <h1 className="text-4xl font-bold mb-6 text-gray-900" {...props} />,
                 h2: ({node, ...props}) => <h2 className="text-3xl font-bold mb-4 mt-8 text-gray-900" {...props} />,
                 h3: ({node, ...props}) => <h3 className="text-2xl font-bold mb-3 mt-6 text-gray-900" {...props} />,

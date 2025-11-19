@@ -6,22 +6,44 @@ import ImageBlock from './Blocks/ImageBlock'
 import VideoBlock from './Blocks/VideoBlock'
 import { blockTypes } from '@/lib/data'
 import { Button } from './ui/button'
+import TextImageBlock from './Blocks/TextImageBlock'
+import ImageTextBlock from './Blocks/ImageTextBlock'
+import BlockMenu from './BlockMenu'
 
 const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, handleDragOver, handleDrop, showBlockMenu, setShowBlockMenu }) => {
 
-    const formatText = (blockId, command) => {
-        const textarea = document.getElementById(`block-${blockId}`)
-        const start = textarea.selectionStart
-        const end = textarea.selectionEnd
-        const selectedText = block.content.substring(start, end)
-        
-        let formatted = selectedText
-        if (command === 'bold') formatted = `**${selectedText}**`
-        if (command === 'italic') formatted = `*${selectedText}*`
-        if (command === 'code') formatted = `\`${selectedText}\``
-        
-        const newContent = block.content.substring(0, start) + formatted + block.content.substring(end)
-        updateBlock(blockId, newContent)
+    const handleFormat = (command) => {
+        const textarea = document.getElementById(`block-${block.id}`);
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+
+        const rawText =
+        typeof block.content === "string"
+            ? block.content
+            : block.content.text || "";
+
+        const newText = formatSelectedText(rawText, start, end, command);
+
+        if (typeof block.content === "string") {
+            updateBlock(block.id, newText);
+        } else {
+            updateBlock(block.id, { text: newText });
+        }
+    };
+
+    const formatSelectedText  = (text, selectionStart, selectionEnd, command) => {
+        const selected = text.substring(selectionStart, selectionEnd);
+        const styles = {
+            bold: `**${selected}**`,
+            italic: `*${selected}*`,
+            code: `\`${selected}\``
+        };
+
+        const formatted = styles[command] || selected;
+
+        return ( text.substring(0, selectionStart) + formatted + text.substring(selectionEnd) );
     }
 
 
@@ -32,6 +54,12 @@ const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, han
             
             case "video":
                 return <VideoBlock block={block} updateBlock={updateBlock} />
+            
+            case "text-image":
+                return <TextImageBlock block={block} updateBlock={updateBlock} />;
+
+            case "image-text":
+                return <ImageTextBlock block={block} updateBlock={updateBlock} />;
             
             default:
                 return <TextBlock block={block} updateBlock={updateBlock} addBlock={addBlock}/>
@@ -57,21 +85,21 @@ const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, han
                         (block.type !== 'image' && block.type !=='video') && (
                             <>
                                 <button
-                                    onClick={() => formatText(block.id, 'bold')}
+                                    onClick={() => handleFormat('bold')}
                                     className="p-1 hover:bg-gray-100 rounded text-sm font-bold text-gray-600"
                                     title="Bold"
                                 >
                                     B
                                 </button>
                                 <button
-                                    onClick={() => formatText(block.id, 'italic')}
+                                    onClick={() => handleFormat('italic')}
                                     className="p-1 hover:bg-gray-100 rounded text-sm italic text-gray-600"
                                     title="Italic"
                                 >
                                     I
                                 </button>
                                 <button
-                                    onClick={() => formatText(block.id, 'code')}
+                                    onClick={() => handleFormat('code')}
                                     className="p-1 hover:bg-gray-100 rounded text-sm font-mono text-gray-600"
                                     title="Code"
                                 >
@@ -103,7 +131,7 @@ const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, han
             </div>
         </div>
 
-        <div className="relative h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="relative -mt-2 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <button
                 onClick={() => setShowBlockMenu(showBlockMenu === block.id ? null : block.id)}
                 className="absolute bg-white border-2 border-gray-200 rounded-full p-1 hover:border-blue-500 hover:bg-blue-50 transition-all"
@@ -112,17 +140,18 @@ const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, han
             </button>
 
             {showBlockMenu === block.id && (
-                <div className="absolute top-8 bg-white rounded-lg shadow-xl border border-gray-200 p-2 z-10 min-w-[200px]">
-                {blockTypes.map(({ type, icon: Icon, label }) => (
-                    <Button key={type} variant={'ghost'}
-                        onClick={() => addBlock(type, block.id)}
-                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg text-left transition-colors"
-                        >
-                        <Icon className="w-4 h-4 text-gray-600" />
-                        <span className="text-sm font-medium text-gray-700">{label}</span>
-                    </Button>
-                ))}
-                </div>
+                <BlockMenu block={block} addBlock={addBlock}/>
+                // <div className="absolute top-8 bg-white rounded-lg shadow-xl border border-gray-200 p-2 z-10 min-w-[200px]">
+                // {blockTypes.map(({ type, icon: Icon, label }) => (
+                //     <Button key={type} variant={'ghost'}
+                //         onClick={() => addBlock(type, block.id)}
+                //         className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg text-left transition-colors"
+                //         >
+                //         <Icon className="w-4 h-4 text-gray-600" />
+                //         <span className="text-sm font-medium text-gray-700">{label}</span>
+                //     </Button>
+                // ))}
+                // </div>
             )}
         </div>
     </div>

@@ -33,5 +33,30 @@ export const blockTypes = [
     { type: 'quote', icon: Quote, label: 'Quote' },
     { type: 'code', icon: Code, label: 'Code' },
     { type: 'image', icon: ImageIcon, label: 'Image' },
+    { type: 'text-image', icon: ImageIcon, label: 'Text + Image' },
+    { type: 'image-text', icon: ImageIcon, label: 'Image + Text' },
     { type: 'video', icon: VideoIcon, label: 'Video' },
 ]
+
+export const blockGroups = {
+    headings: [
+      { type: "heading1", label: "Heading 1", icon: Type },
+      { type: "heading2", label: "Heading 2", icon: Type },
+      { type: "heading3", label: "Heading 3", icon: Type },
+      { type: "heading4", label: "Heading 4", icon: Type },
+    ],
+
+    text: [
+      { type: "paragraph", label: "Paragraph", icon: AlignLeft },
+      { type: "list", label: "List", icon: List },
+      { type: "quote", label: "Quote", icon: Quote },
+      { type: "code", label: "Code", icon: Code },
+    ],
+
+    media: [
+      { type: "image", label: "Image", icon: ImageIcon },
+      { type: "video", label: "Video", icon: VideoIcon },
+      { type: "text-image", label: "Text + Image", icon: ImageIcon },
+      { type: "image-text", label: "Image + Text", icon: ImageIcon },
+    ],
+};

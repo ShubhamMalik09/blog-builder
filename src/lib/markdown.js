@@ -37,6 +37,28 @@ export function blocksToMarkdown(blocks) {
       case "video":
         return `<video controls src="${block.content}"></video>\n`;
       
+      case "text-image": {
+        const text = (block.content.text || "").replace(/\n/g, "<br>");
+        const image = block.content.image || "";
+
+        return `
+|  |  |
+|---|---|
+| ${text} | ![](${image}) |`;
+      }
+
+      case "image-text": {
+        const text = (block.content.text || "").replace(/\n/g, "<br>");
+        const image = block.content.image || "";
+
+        return `
+|  |  |
+|---|---|
+| ![](${image}) | ${text} |
+`;
+      }
+      
+      
       default:
         return `${block.content}\n`
     }
@@ -54,6 +76,7 @@ export function markdownToBlocks(markdown) {
   let codeContent = []
   
   for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
     const line = lines[i].trim();
     
     // Handle code blocks
@@ -73,8 +96,53 @@ export function markdownToBlocks(markdown) {
     }
     
     if (inCodeBlock) {
-      codeContent.push(line)
+      codeContent.push(rawLine)
       continue
+    }
+
+    if (line.startsWith("|") && line.endsWith("|")) {
+      const cells = line.split("|").filter((c) => c.trim() !== "");
+
+      if (cells.length === 2) {
+        const left = cells[0].trim();
+        const right = cells[1].trim();
+
+        const extractImage = (str) => {
+          const match = str.match(/\!\[\]\((.*?)\)/);
+          return match ? match[1] : null;
+        };
+
+        const extractText = (str) => {
+          return str.replace(/\!\[\]\((.*?)\)/g, "").trim();
+        };
+
+        const leftIsImage = extractImage(left);
+        const rightIsImage = extractImage(right);
+
+        if (leftIsImage && !rightIsImage) {
+          blocks.push({
+            id: Date.now() + i,
+            type: "image-text",
+            content: {
+              image: leftIsImage,
+              text: extractText(right),
+            },
+          });
+          continue;
+        }
+
+        if (!leftIsImage && rightIsImage) {
+          blocks.push({
+            id: Date.now() + i,
+            type: "text-image",
+            content: {
+              text: extractText(left),
+              image: rightIsImage,
+            },
+          });
+          continue;
+        }
+      }
     }
 
     if (line.startsWith("<video") && line.includes("src=")) {

@@ -20,6 +20,49 @@ export default function MarkdownPreview({ markdown }) {
       </div>
       
       <article className="prose prose-lg max-w-none">
+        <style>{`
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            table-layout: fixed;
+          }
+
+          tr {
+            display: table-row;
+          }
+
+          td {
+            border: none;
+            width: 50%;
+            padding: 16px;
+            vertical-align: middle;       /* CENTER CONTENT VERTICALLY */
+            text-align: center;           /* CENTER INLINE TEXT/IMAGES */
+          }
+
+          td img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+          }
+
+          /* MOBILE — stack columns */
+          @media (max-width: 768px) {
+            table {
+              display: block;
+            }
+            tr {
+              display: block;
+            }
+            td {
+              width: 100% !important;
+              display: block;
+            }
+          }
+        `}</style>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]} 
@@ -29,8 +72,18 @@ export default function MarkdownPreview({ markdown }) {
             if (url.startsWith("data:video/")) return url;
             // Default behavior for everything else
             return url;
-        }}
+          }}
           components={{
+            table: ({node, ...props}) => (
+              <table {...props} className="rounded-lg shadow-sm" />
+            ),
+            tr: ({node, ...props}) => <tr {...props} />,
+            th: ({node, ...props}) => (
+              <th className="bg-gray-100 font-semibold text-gray-800 text-left" {...props} />
+            ),
+            td: ({node, ...props}) => (
+              <td className="align-top" {...props} />
+            ),
             img: ({node, ...props}) => {
                 console.log(props);
                 const src = props.src;
