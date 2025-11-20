@@ -22,6 +22,10 @@ const ImageTextBlock = ({ block, updateBlock }) => {
         updateBlock(block.id, { image: url });
     };
 
+    const clearImage = () =>{
+        updateBlock(block.id, { image: "" });
+    }
+
   return (
     <div className="grid grid-cols-2 gap-4 w-full">
 
@@ -32,27 +36,23 @@ const ImageTextBlock = ({ block, updateBlock }) => {
         />
 
         {/* LEFT IMAGE */}
-        <div className="w-full cursor-pointer" onClick={() => setOpenModal(true)}>
+        <div className="w-full cursor-pointer">
             {image ? (
-                <div className="relative group">
-                    <img
-                        src={image}
-                        alt="uploaded"
-                        className="rounded-xl max-w-full h-auto"
-                    />
+                <div className="flex items-center justify-between bg-gray-100 px-4 py-2 rounded-xl border">
+                    <span className="text-sm text-blue-600 underline break-all cursor-pointer"
+                            onClick={() => window.open(block.content, "_blank")}>
+                        {image}
+                    </span>
 
                     <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            updateImage("");
-                        }}
-                        className="absolute top-2 right-2 bg-white/90 w-6 h-6 rounded-full shadow hidden group-hover:block"
+                        onClick={clearImage}
+                        className="text-xs px-2 py-1 bg-red-200 text-red-700 rounded hover:bg-red-300"
                     >
                         ✕
                     </button>
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 p-6 rounded-xl text-gray-500 hover:bg-gray-50">
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 p-6 rounded-xl text-gray-500 hover:bg-gray-50" onClick={() => setOpenModal(true)}>
                     <span>Click to add image</span>
                 </div>
             )}

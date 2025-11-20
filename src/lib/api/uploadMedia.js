@@ -12,5 +12,5 @@ export async function uploadImageToServer(file) {
     if (!res.ok) throw new Error("Image upload failed");
 
     const data = await res.json();
-    return data.url; // returned URL from server
+    return data.url;
 }

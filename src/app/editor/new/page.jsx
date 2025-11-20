@@ -7,8 +7,8 @@ const NewBlogEditorPage = () => {
       mode="new"
       initialTitle="Untitled Blog"
       initialBlocks={[
-        { id: 1, type: "heading1", content: "Your Blog Title" },
-        { id: 2, type: "paragraph", content: "Start writing your content here..." },
+        { id: 1, type: "heading1", content: "" },
+        { id: 2, type: "paragraph", content: "" },
       ]}
     />
   )

@@ -12,59 +12,46 @@ export default function BlockEditor({ blogId, setBlocks, blocks }) {
   const [draggedBlock, setDraggedBlock] = useState(null)
   const [showBlockMenu, setShowBlockMenu] = useState(null)
 
+  const generateId = () => crypto.randomUUID();
+
   const updateBlock = (id, content) => {
-    setBlocks(blocks.map(b => {
-      if (b.id !== id) return b;
+    setBlocks((prev) =>
+      prev.map((b) => {
+        if (b.id !== id) return b;
 
-      // special case: content is an object
-      if (typeof b.content === "object" && b.content !== null) {
-        return { 
-          ...b, 
-          content: { 
-            ...b.content, 
-            ...content 
-          }
-        };
-      }
-
-      // normal blocks (string content)
-      return { ...b, content: content };
-    }))
+        if (typeof b.content === 'object' && b.content !== null) {
+          return { ...b, content: { ...b.content, ...content } };
+        }
+        return { ...b, content };
+      })
+    );
   }
 
   const deleteBlock = (id) => {
     if (blocks.length > 1) {
-      setBlocks(blocks.filter(b => b.id !== id))
+      setBlocks((prev) => prev.filter((b) => b.id !== id));
     }
   }
 
-  const addBlock = (type, afterId) => {
-    let newBlock;
-    if (type === "text-image" || type === "image-text") {
-      newBlock = {
-        id: Date.now(),
+    const addBlock = (type, afterId) => {
+      const newBlock = {
+        id: generateId(), // 🔥 stable UUID
         type,
-        content: {
-          text: "",
-          image: ""
-        }
+        content:
+          type === 'text-image' || type === 'image-text'
+            ? { text: '', image: '' }
+            : '',
       };
-    } 
-    else {
-      // all normal blocks
-      newBlock = {
-        id: Date.now(),
-        type,
-        content: getDefaultContent(type)
-      };
-    }
-    
-    const index = blocks.findIndex(b => b.id === afterId)
-    const newBlocks = [...blocks]
-    newBlocks.splice(index + 1, 0, newBlock)
-    setBlocks(newBlocks)
-    setShowBlockMenu(false)
-  }
+
+      setBlocks((prev) => {
+        const index = prev.findIndex((b) => b.id === afterId);
+        const updated = [...prev];
+        updated.splice(index + 1, 0, newBlock);
+        return updated;
+      });
+      setShowBlockMenu(null);
+    };
+
 
   const handleDragStart = (e, block) => {
     setDraggedBlock(block)
@@ -77,19 +64,22 @@ export default function BlockEditor({ blogId, setBlocks, blocks }) {
   }
 
   const handleDrop = (e, targetBlock) => {
-    e.preventDefault()
-    if (!draggedBlock || draggedBlock.id === targetBlock.id) return
+    e.preventDefault();
+    if (!draggedBlock || draggedBlock.id === targetBlock.id) return;
 
-    const dragIndex = blocks.findIndex(b => b.id === draggedBlock.id)
-    const dropIndex = blocks.findIndex(b => b.id === targetBlock.id)
-    
-    const newBlocks = [...blocks]
-    newBlocks.splice(dragIndex, 1)
-    newBlocks.splice(dropIndex, 0, draggedBlock)
-    
-    setBlocks(newBlocks)
-    setDraggedBlock(null)
-  }
+    setBlocks((prev) => {
+      const updated = [...prev];
+      const fromIndex = updated.findIndex((b) => b.id === draggedBlock.id);
+      const toIndex = updated.findIndex((b) => b.id === targetBlock.id);
+
+      updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, draggedBlock);
+
+      return updated;
+    });
+
+    setDraggedBlock(null);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">

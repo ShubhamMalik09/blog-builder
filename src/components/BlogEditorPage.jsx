@@ -12,6 +12,7 @@ import TagModal from "./TagModal";
 import { Badge } from "./ui/badge";
 
 export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle, initialCover, initialDescription, initialPrimaryTag, initialSecondayTags}) {
+  const [hydrated, setHydrated] = useState(false);
   const [title, setTitle] = useState(initialTitle)
   const [coverImage, setCoverImage] = useState(initialCover || null);
   const [ description, setDescription ] = useState(initialDescription || '');
@@ -30,6 +31,7 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
   const secondaryRef = useRef(selectedSecondary);
 
   const markdown = blocksToMarkdown(blocks);
+  console.log(markdown);
 
   useEffect(() => { titleRef.current = title }, [title]);
   useEffect(() => { coverRef.current = coverImage }, [coverImage]);
@@ -37,6 +39,7 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
   useEffect(() => { primaryRef.current = selectedPrimary }, [selectedPrimary]);
   useEffect(() => { secondaryRef.current = selectedSecondary }, [selectedSecondary]);
   useEffect(() => { blocksRef.current = blocks }, [blocks]);
+  useEffect(() => setHydrated(true), []);
 
   useEffect(() => {
     if (mode !== "new") return;
@@ -119,7 +122,7 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
               placeholder="Blog Title"
             />
             <div className="w-full flex">
-              {coverImage ? (
+              {hydrated && coverImage ? (
                 <div className="relative w-full h-20">
                   <img
                     src={coverImage}

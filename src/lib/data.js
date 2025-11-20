@@ -23,21 +23,6 @@ export const styles = {
     code: "text-sm font-mono bg-gray-900 text-green-400 p-4 rounded-lg"
 }
 
-export const blockTypes = [
-    { type: 'heading1', icon: Type, label: 'Heading 1' },
-    { type: 'heading2', icon: Type, label: 'Heading 2' },
-    { type: 'heading3', icon: Type, label: 'Heading 3' },
-    { type: 'heading4', icon: Type, label: 'Heading 4' },
-    { type: 'paragraph', icon: AlignLeft, label: 'Paragraph' },
-    { type: 'list', icon: List, label: 'List' },
-    { type: 'quote', icon: Quote, label: 'Quote' },
-    { type: 'code', icon: Code, label: 'Code' },
-    { type: 'image', icon: ImageIcon, label: 'Image' },
-    { type: 'text-image', icon: ImageIcon, label: 'Text + Image' },
-    { type: 'image-text', icon: ImageIcon, label: 'Image + Text' },
-    { type: 'video', icon: VideoIcon, label: 'Video' },
-]
-
 export const blockGroups = {
     headings: [
       { type: "heading1", label: "Heading 1", icon: Type },

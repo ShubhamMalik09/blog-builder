@@ -13,23 +13,39 @@ import BlockMenu from './BlockMenu'
 const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, handleDragOver, handleDrop, showBlockMenu, setShowBlockMenu }) => {
 
     const handleFormat = (command) => {
+        const isTextObject = typeof block.content === "object";
+
+        const text = isTextObject ? block.content.text : block.content;
+
+        if (!text) return;
+
+        // get where cursor was using DOM
         const textarea = document.getElementById(`block-${block.id}`);
         if (!textarea) return;
 
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
 
-        const rawText =
-        typeof block.content === "string"
-            ? block.content
-            : block.content.text || "";
+        const selected = text.substring(start, end);
 
-        const newText = formatSelectedText(rawText, start, end, command);
+        if (!selected) return;
 
-        if (typeof block.content === "string") {
-            updateBlock(block.id, newText);
+        const formatted =
+        command === "bold"
+            ? `**${selected}**`
+            : command === "italic"
+            ? `*${selected}*`
+            : command === "code"
+            ? `\`${selected}\``
+            : selected;
+
+        const newText =
+        text.substring(0, start) + formatted + text.substring(end);
+
+        if (isTextObject) {
+        updateBlock(block.id, { text: newText });
         } else {
-            updateBlock(block.id, { text: newText });
+        updateBlock(block.id, newText);
         }
     };
 
