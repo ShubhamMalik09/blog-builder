@@ -1,5 +1,5 @@
 import { getDefaultContent } from '@/lib/utils'
-import { Plus, GripVertical, Trash2, Type, AlignLeft, List, Quote, Code, Save, Eye, ImageIcon, VideoIcon } from 'lucide-react'
+import { Plus, GripVertical, Trash2 } from 'lucide-react'
 import React from 'react'
 import TextBlock from './Blocks/TextBlock'
 import ImageBlock from './Blocks/ImageBlock'
@@ -28,8 +28,6 @@ const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, han
 
         const selected = text.substring(start, end);
 
-        if (!selected) return;
-
         const formatted =
         command === "bold"
             ? `**${selected}**`
@@ -48,19 +46,6 @@ const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, han
         updateBlock(block.id, newText);
         }
     };
-
-    const formatSelectedText  = (text, selectionStart, selectionEnd, command) => {
-        const selected = text.substring(selectionStart, selectionEnd);
-        const styles = {
-            bold: `**${selected}**`,
-            italic: `*${selected}*`,
-            code: `\`${selected}\``
-        };
-
-        const formatted = styles[command] || selected;
-
-        return ( text.substring(0, selectionStart) + formatted + text.substring(selectionEnd) );
-    }
 
 
     const renderBlock = (block) => {

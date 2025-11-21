@@ -26,6 +26,12 @@ const ImageTextBlock = ({ block, updateBlock }) => {
         updateBlock(block.id, { image: "" });
     }
 
+    const openLink = () => {
+        if (typeof window !== "undefined" && image) {
+            window.open(image, "_blank");
+        }
+    };
+
   return (
     <div className="grid grid-cols-2 gap-4 w-full">
 
@@ -39,8 +45,7 @@ const ImageTextBlock = ({ block, updateBlock }) => {
         <div className="w-full cursor-pointer">
             {image ? (
                 <div className="flex items-center justify-between bg-gray-100 px-4 py-2 rounded-xl border">
-                    <span className="text-sm text-blue-600 underline break-all cursor-pointer"
-                            onClick={() => window.open(block.content, "_blank")}>
+                    <span className="text-sm text-blue-600 underline break-all cursor-pointer" onClick={openLink}>
                         {image}
                     </span>
 

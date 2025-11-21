@@ -1,7 +1,6 @@
 // Convert blocks to Markdown
 export function blocksToMarkdown(blocks) {
   return blocks.map(block => {
-    console.log("BLOCK →", block.type, block.content);
     switch (block.type) {
       case 'heading1':
         return `# ${block.content}\n`;
@@ -42,9 +41,9 @@ export function blocksToMarkdown(blocks) {
         const image = block.content.image || "";
 
         return `
-|  |  |
+| ${text} | ![](${image}) |
 |---|---|
-| ${text} | ![](${image}) |`;
+`
       }
 
       case "image-text": {
@@ -52,9 +51,8 @@ export function blocksToMarkdown(blocks) {
         const image = block.content.image || "";
 
         return `
-|  |  |
-|---|---|
 | ![](${image}) | ${text} |
+|---|---|
 `;
       }
       
@@ -67,77 +65,87 @@ export function blocksToMarkdown(blocks) {
 
 // Convert Markdown to blocks
 export function markdownToBlocks(markdown) {
-  if (!markdown) return []
-  
-  const blocks = []
-  const lines = markdown.split('\n')
-  let currentBlock = null
-  let inCodeBlock = false
-  let codeContent = []
-  
+  if (!markdown) return [];
+
+  const blocks = [];
+  const lines = markdown.split("\n");
+  let currentList = null;
+  let inCode = false;
+  let codeBuffer = [];
+
+  const newId = () => Date.now() + Math.floor(Math.random() * 99999);
+
+  const extractImage = (str) => {
+    const match = str.match(/!\[\]\((.*?)\)/);
+    return match ? match[1] : null;
+  };
+
+  const extractText = (str) => {
+    return str.replace(/!\[\]\((.*?)\)/g, "").trim();
+  };
+
   for (let i = 0; i < lines.length; i++) {
-    const rawLine = lines[i];
-    const line = lines[i].trim();
-    
-    // Handle code blocks
-    if (line.startsWith('```')) {
-      if (inCodeBlock) {
+    const raw = lines[i];
+    const line = raw.trim();
+
+    // -----------------------------
+    // CODE BLOCKS
+    // -----------------------------
+    if (line.startsWith("```")) {
+      if (inCode) {
         blocks.push({
-          id: Date.now() + i,
-          type: 'code',
-          content: codeContent.join('\n')
-        })
-        codeContent = []
-        inCodeBlock = false
+          id: newId(),
+          type: "code",
+          content: codeBuffer.join("\n"),
+        });
+        codeBuffer = [];
+        inCode = false;
       } else {
-        inCodeBlock = true
+        inCode = true;
       }
-      continue
-    }
-    
-    if (inCodeBlock) {
-      codeContent.push(rawLine)
-      continue
+      continue;
     }
 
-    if (line.startsWith("|") && line.endsWith("|")) {
-      const cells = line.split("|").filter((c) => c.trim() !== "");
+    if (inCode) {
+      codeBuffer.push(raw);
+      continue;
+    }
 
-      if (cells.length === 2) {
-        const left = cells[0].trim();
-        const right = cells[1].trim();
+    // -----------------------------
+    // TEXT-IMAGE / IMAGE-TEXT ROW
+    // format: | left | right |
+    // -----------------------------
+    if (/^\|(.+)\|(.+)\|$/.test(raw)) {
+      const cols = raw.split("|").filter((x) => x.trim() !== "");
 
-        const extractImage = (str) => {
-          const match = str.match(/\!\[\]\((.*?)\)/);
-          return match ? match[1] : null;
-        };
+      if (cols.length === 2) {
+        const left = cols[0].trim();
+        const right = cols[1].trim();
 
-        const extractText = (str) => {
-          return str.replace(/\!\[\]\((.*?)\)/g, "").trim();
-        };
+        const leftImg = extractImage(left);
+        const rightImg = extractImage(right);
 
-        const leftIsImage = extractImage(left);
-        const rightIsImage = extractImage(right);
-
-        if (leftIsImage && !rightIsImage) {
+        // IMAGE | TEXT
+        if (leftImg && !rightImg) {
           blocks.push({
-            id: Date.now() + i,
+            id: newId(),
             type: "image-text",
             content: {
-              image: leftIsImage,
+              image: leftImg,
               text: extractText(right),
             },
           });
           continue;
         }
 
-        if (!leftIsImage && rightIsImage) {
+        // TEXT | IMAGE
+        if (!leftImg && rightImg) {
           blocks.push({
-            id: Date.now() + i,
+            id: newId(),
             type: "text-image",
             content: {
               text: extractText(left),
-              image: rightIsImage,
+              image: rightImg,
             },
           });
           continue;
@@ -145,123 +153,99 @@ export function markdownToBlocks(markdown) {
       }
     }
 
+    // -----------------------------
+    // VIDEO (<video src="..." />)
+    // -----------------------------
     if (line.startsWith("<video") && line.includes("src=")) {
       const match = line.match(/src="([^"]+)"/);
       const src = match ? match[1] : "";
 
-      if (src && src.startsWith("data:video")) {
-        blocks.push({
-          id: Date.now() + i,
-          type: "video",
-          content: src,
-        });
-        continue;
-      }
+      blocks.push({
+        id: newId(),
+        type: "video",
+        content: src,
+      });
+      continue;
     }
 
+    // -----------------------------
+    // IMAGE ![](url)
+    // remote OR base64
+    // -----------------------------
     if (line.startsWith("![](") && line.endsWith(")")) {
-      const src = line.substring(4, line.length - 1);
-
-      if (src && src.startsWith("data:image")) {
-        blocks.push({
-          id: Date.now() + i,
-          type: "image",
-          content: src,
-        });
-        continue;
-      }
+      const url = line.slice(4, -1); // inside ()
+      blocks.push({
+        id: newId(),
+        type: "image",
+        content: url,
+      });
+      continue;
     }
 
+    // -----------------------------
+    // HEADINGS
+    // -----------------------------
     if (line.startsWith("#### ")) {
-      blocks.push({
-        id: Date.now() + i,
-        type: "heading4",
-        content: line.substring(5),
-      });
+      blocks.push({ id: newId(), type: "heading4", content: line.slice(5) });
       continue;
     }
-
     if (line.startsWith("### ")) {
-      blocks.push({
-        id: Date.now() + i,
-        type: "heading3",
-        content: line.substring(4),
-      });
+      blocks.push({ id: newId(), type: "heading3", content: line.slice(4) });
       continue;
     }
-
     if (line.startsWith("## ")) {
+      blocks.push({ id: newId(), type: "heading2", content: line.slice(3) });
+      continue;
+    }
+    if (line.startsWith("# ")) {
+      blocks.push({ id: newId(), type: "heading1", content: line.slice(2) });
+      continue;
+    }
+
+    // -----------------------------
+    // QUOTES
+    // -----------------------------
+    if (line.startsWith("> ")) {
       blocks.push({
-        id: Date.now() + i,
-        type: "heading2",
-        content: line.substring(3),
+        id: newId(),
+        type: "quote",
+        content: line.substring(2),
       });
       continue;
     }
-    
-    // Handle headings
-    if (line.startsWith('# ')) {
-      blocks.push({
-        id: Date.now() + i,
-        type: 'heading',
-        content: line.substring(2)
-      })
-      continue
-    }
-    
-    // Handle quotes
-    if (line.startsWith('> ')) {
-      blocks.push({
-        id: Date.now() + i,
-        type: 'quote',
-        content: line.substring(2)
-      })
-      continue
-    }
-    
-    // Handle list items
-    if (line.startsWith('• ') || line.startsWith('- ') || line.startsWith('* ')) {
-      if (currentBlock && currentBlock.type === 'list') {
-        currentBlock.content += '\n' + line
+
+    // -----------------------------
+    // LISTS
+    // -----------------------------
+    if (line.match(/^[-*•] /)) {
+      if (!currentList) {
+        currentList = {
+          id: newId(),
+          type: "list",
+          content: line,
+        };
       } else {
-        if (currentBlock) blocks.push(currentBlock)
-        currentBlock = {
-          id: Date.now() + i,
-          type: 'list',
-          content: line
-        }
+        currentList.content += "\n" + line;
       }
-      continue
+      continue;
+    } else if (currentList) {
+      blocks.push(currentList);
+      currentList = null;
     }
-    
-    // Handle paragraphs
-    if (line) {
-      if (currentBlock && currentBlock.type === 'list') {
-        blocks.push(currentBlock)
-        currentBlock = null
-      }
-      
+
+    // -----------------------------
+    // PARAGRAPH
+    // -----------------------------
+    if (line.length > 0) {
       blocks.push({
-        id: Date.now() + i,
-        type: 'paragraph',
-        content: line
-      })
-    } else {
-      if (currentBlock) {
-        blocks.push(currentBlock)
-        currentBlock = null
-      }
+        id: newId(),
+        type: "paragraph",
+        content: line,
+      });
     }
-  }
-  
-  if (currentBlock) {
-    blocks.push(currentBlock)
   }
 
-  return blocks
-  
-  // return blocks.length > 0 ? blocks : [
-  //   { id: 1, type: 'heading', content: 'Your Blog Title' },
-  //   { id: 2, type: 'paragraph', content: 'Start writing your content here...' }
-  // ]
+  if (currentList) blocks.push(currentList);
+
+  return blocks;
 }

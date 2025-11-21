@@ -5,14 +5,19 @@ export function getPrimaryTags() {
   return api.get("/tags/primary");
 }
 
-export function createPrimaryTag(tag) {
-  return api.post("/tags/primary", { tag });
+// export function createPrimaryTag(tag) {
+//   return api.post("/tags/primary", { tag });
+// }
+
+// export function getSecondaryTags() {
+//   return api.get("/tags/secondary");
+// }
+
+// export function createSecondaryTag(tag) {
+//   return api.post("/tags/secondary", { tag });
+// }
+
+export function getIndustries() {
+  return api.get("/tags/industries");
 }
 
-export function getSecondaryTags() {
-  return api.get("/tags/secondary");
-}
-
-export function createSecondaryTag(tag) {
-  return api.post("/tags/secondary", { tag });
-}

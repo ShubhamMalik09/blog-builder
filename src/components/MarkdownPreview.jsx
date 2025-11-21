@@ -5,18 +5,11 @@ import remarkGfm from 'remark-gfm'
 import rehypeRaw from "rehype-raw";
 
 
-export default function MarkdownPreview({ markdown }) {
+export default function MarkdownPreview({ markdown, title }) {
   return (
     <div className="p-8">
       <div className="mb-6 pb-4 border-b border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-          </svg>
-          Live Preview
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">Changes appear instantly as you type</p>
+        <p className="text-4xl font-bold mt-1 text-center">{title}</p>
       </div>
       
       <article className="prose prose-lg max-w-none">
@@ -85,7 +78,6 @@ export default function MarkdownPreview({ markdown }) {
               <td className="align-top" {...props} />
             ),
             img: ({node, ...props}) => {
-                console.log(props);
                 const src = props.src;
                 if (!src) return null;
                 return <img 

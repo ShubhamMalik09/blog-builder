@@ -10,15 +10,23 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import TagModal from "./TagModal";
 import { Badge } from "./ui/badge";
+import ImageModal from "./ImageModal";
+import { generateId } from "@/lib/utils";
+import { createBlog, updateBlog } from "@/lib/api/blog";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { toast } from "sonner"
 
-export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle, initialCover, initialDescription, initialPrimaryTag, initialSecondayTags}) {
+export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle, initialCover, initialDescription, initialPrimaryTag, initialSecondayTags, id}) {
+  const isClient = typeof window !== "undefined";
+  const router = useRouter()
+  const { primaryTags, industries } = useSelector(state => state.tags);
+  const [coverModal, setCoverModal] = useState(false);
   const [hydrated, setHydrated] = useState(false);
-  const [title, setTitle] = useState(initialTitle)
+  const [title, setTitle] = useState(initialTitle || '')
   const [coverImage, setCoverImage] = useState(initialCover || null);
   const [ description, setDescription ] = useState(initialDescription || '');
-  const [ primaryTags, setPrimaryTags ] = useState(["Deep Learning", "NLP", "Startups"]);
-  const [secondaryTags, setSecondaryTags] = useState(["Deep Learning", "NLP", "Startups"]);
-  const [selectedPrimary, setSelectedPrimary] = useState( initialPrimaryTag || "");
+  const [selectedPrimary, setSelectedPrimary] = useState( initialPrimaryTag || null);
   const [selectedSecondary, setSelectedSecondary] = useState(initialSecondayTags || []);
   const [isSaving, setIsSaving] = useState(false)
   const [blocks, setBlocks] = useState(initialBlocks);
@@ -31,7 +39,6 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
   const secondaryRef = useRef(selectedSecondary);
 
   const markdown = blocksToMarkdown(blocks);
-  console.log(markdown);
 
   useEffect(() => { titleRef.current = title }, [title]);
   useEffect(() => { coverRef.current = coverImage }, [coverImage]);
@@ -79,33 +86,101 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
     setLoading(false);
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async() => {
     setIsSaving(true)
     const markdown = blocksToMarkdown(blocks)
-    const id = blogId === 'new' ? Date.now().toString() : blogId
-    
-    // saveBlog(id, title, blocks, markdown)
-    
-    setTimeout(() => {
-      setIsSaving(false)
-      if (blogId === 'new') {
-        router.push(`/editor/${id}`)
-      }
-    }, 500)
+
+    const payload = {
+      title: title || "",
+      slug : title?.trim()?.toLowerCase()?.split(' ')?.join('-'),
+      primary_tag_id:  selectedPrimary.id || null,
+      cover_image_url: coverImage || "",
+      description: description || "",
+      content_markdown: markdown,
+      industry_ids: selectedSecondary.map(tag => tag.id) || [],
+    };
+
+    if(mode=='new'){
+      await handleCreateBlog(payload);
+    } else{
+      await handleUpdateBlog(payload, id);
+    }
+
+    return;
   }
 
+  const handleCreateBlog = async(payload) =>{
+    try{
+      const result = await createBlog(payload)
+      console.log(result.data);
+      if(result.data.success){
+        toast.success("Blog Created Successfully")
+        localStorage.removeItem('blog-draft');
+        router.push(`/editor/${result.data.data.id}`)
+      }
+      else{
+        toast.error('Unable to create blog', {
+          description: result.data.error
+        })
+        console.log('unable to save result', result.data.error);
+      }
+    } catch(err){
+      toast.error('Unable to create blog', {
+        description: (err.response?.data?.error || err.message )
+      })
+      console.log('unable to save result ', err);
+    } finally{
+      setIsSaving(false);
+    }
+  }
+
+  const handleUpdateBlog = async(payload, id) => {
+    try{
+      const result = await updateBlog(id,payload);
+      if(result.data.success){
+        toast.success('Blog Updated Successfully')
+      }
+      else{
+        toast.error('Unable to update blog', {
+          description: result.data.error
+        })
+      }
+    } catch (err){
+      toast.error('Unable to update blog', {
+        description: (err.response?.data?.error || err.message )
+      })
+      console.log('error updating blog', err);
+    } finally{
+      setIsSaving(false);
+    }
+  }
+
+  if (!hydrated) return null; 
   return (
     <div className="flex flex-col w-full p-2">
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-50 backdrop-blur-xl bg-opacity-90 px-4">
-            <div className="w-full mx-auto px-6 py-3">
-                <div className="flex items-center justify-between mb-3">
-                  <h1 className="text-2xl font-bold text-black">
-                    Wokelo Blog Builder
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-50 backdrop-blur-xl bg-opacity-90 w-full">
+            <div className="w-full py-3">
+                <div className="grid grid-cols-3 items-center justify-center mb-3 px-3 w-full">
+                  <h1 className="text-2xl font-bold text-black flex w-full items-center justify-start">
+                    <span className="cursor-pointer" onClick={()=>router.push('/')}>Wokelo Blog Builder</span>
                   </h1>
-                  <div className="flex gap-3">
+                  <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2 w-full justify-center">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Live Preview
+                  </h2>
+                  <div className="flex gap-3 w-full items-center justify-end">
                     <Button className="px-6 py-2 bg-black text-white rounded-lg font-medium hover:shadow-lg hover:bg-gray-800 cursor-pointer transition-all flex items-center gap-2 disabled:opacity-50" onClick={handleSave} disabled={isSaving}>
                       <Save className="w-4 h-4" />
-                      {isSaving ? 'Saving...' : 'Save'}
+                      {
+                        mode === 'new' ? (
+                          isSaving ? 'Creating...' : 'Create'
+                        ) : (
+                          isSaving ? 'Updating...': 'Update'
+                        )
+                      }
                     </Button>
                   </div>
                 </div>
@@ -122,10 +197,15 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
               placeholder="Blog Title"
             />
             <div className="w-full flex">
+              <ImageModal
+                open={coverModal}
+                onClose={() => setCoverModal(false)}
+                onSelect={(url) => setCoverImage(url)}
+              />
               {hydrated && coverImage ? (
                 <div className="relative w-full h-20">
                   <img
-                    src={coverImage}
+                    src={ isClient ? coverImage : ""}
                     className="w-full h-full object-cover rounded-xl border"
                     alt="Cover"
                   />
@@ -138,20 +218,12 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
                   </button>
                 </div>
               ) : (
-                <label className="w-full h-20 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 cursor-pointer">
-                  <span className="font-medium">Upload Cover Image</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (!file) return;
-                      const url = URL.createObjectURL(file);
-                      setCoverImage(url);
-                    }}
-                  />
-                </label>
+                <div
+                  onClick={() => setCoverModal(true)}
+                  className="w-full h-20 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 cursor-pointer"
+                >
+                  <span className="font-medium">Add Cover Image</span>
+                </div>
               )}
             </div>
           </div>
@@ -168,26 +240,26 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
                 <label className="text-sm font-semibold text-gray-700">Primary Tag</label>
 
                 <div className="flex items-center gap-3">
-                  <Select onValueChange={(v) => setSelectedPrimary(v)}>
+                  <Select value={selectedPrimary} onValueChange={(v) => setSelectedPrimary(v)}>
                     <SelectTrigger className="w-56">
                       <SelectValue placeholder="Select a primary tag" />
                     </SelectTrigger>
                     <SelectContent>
                       {primaryTags.map((tag, idx) => (
                         <SelectItem key={idx} value={tag}>
-                          {tag}
+                          {tag?.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
 
-                  <TagModal
+                  {/* <TagModal
                     triggerText="+ New Primary"
                     onAdd={(tag) => {
                       setPrimaryTags([...primaryTags, tag]);
                       setSelectedPrimary(tag);
                     }}
-                  />
+                  /> */}
                 </div>
               </div>
               <div className="flex flex-col w-full space-y-2">
@@ -207,21 +279,21 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
                     </SelectTrigger>
 
                     <SelectContent>
-                      {secondaryTags.map((tag, idx) => (
+                      {industries.map((tag, idx) => (
                         <SelectItem key={idx} value={tag}>
-                          {tag}
+                          {tag.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
 
-                  <TagModal
+                  {/* <TagModal
                     triggerText="+ New Secondary"
                     onAdd={(tag) => {
                       setSecondaryTags([...secondaryTags, tag]);
                       setSelectedSecondary([...selectedSecondary, tag]);
                     }}
-                  />
+                  /> */}
                 </div>
 
                 {/* Selected chips */}
@@ -232,7 +304,7 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
                       variant="secondary"
                       className="px-3 py-1 flex items-center gap-2 text-sm"
                     >
-                      {tag}
+                      {tag.name}
                       <button
                         onClick={() =>
                           setSelectedSecondary(selectedSecondary.filter((t) => t !== tag))
@@ -260,7 +332,7 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
                 </div>
 
                 <div className="w-1/2 overflow-y-auto bg-white">
-                    <MarkdownPreview markdown={markdown} />
+                    <MarkdownPreview markdown={markdown} title={title} />
                 </div>
             </div>
         )}

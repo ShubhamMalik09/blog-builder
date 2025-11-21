@@ -5,14 +5,12 @@ import { useRouter } from 'next/navigation'
 import { blocksToMarkdown, markdownToBlocks } from '@/lib/markdown'
 import { Button } from './ui/button'
 import Block from './Block'
-import { getDefaultContent } from '@/lib/utils'
+import { generateId, getDefaultContent } from '@/lib/utils'
 // import { saveBlog, getBlog } from '@/lib/storage'
 
 export default function BlockEditor({ blogId, setBlocks, blocks }) {
   const [draggedBlock, setDraggedBlock] = useState(null)
   const [showBlockMenu, setShowBlockMenu] = useState(null)
-
-  const generateId = () => crypto.randomUUID();
 
   const updateBlock = (id, content) => {
     setBlocks((prev) =>

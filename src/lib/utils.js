@@ -9,3 +9,5 @@ export function cn(...inputs) {
 export const getDefaultContent = (type) => {
   return defaults[type] || ''
 }
+
+export const generateId = () => crypto.randomUUID();

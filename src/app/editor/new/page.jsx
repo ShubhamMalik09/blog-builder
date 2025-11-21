@@ -1,4 +1,5 @@
 import BlogEditorPage from '@/components/BlogEditorPage'
+import { generateId } from '@/lib/utils';
 import React from 'react'
 
 const NewBlogEditorPage = () => {
@@ -7,8 +8,8 @@ const NewBlogEditorPage = () => {
       mode="new"
       initialTitle="Untitled Blog"
       initialBlocks={[
-        { id: 1, type: "heading1", content: "" },
-        { id: 2, type: "paragraph", content: "" },
+        { id: generateId(), type: "heading1", content: "" },
+        { id: generateId(), type: "paragraph", content: "" },
       ]}
     />
   )

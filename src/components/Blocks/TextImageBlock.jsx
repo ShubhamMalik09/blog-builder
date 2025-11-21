@@ -27,9 +27,14 @@ const TextImageBlock = ({ block, updateBlock }) => {
         updateBlock(block.id, { image: "" });
     }
 
+    const openLink = () => {
+        if (typeof window !== "undefined" && image) {
+            window.open(image, "_blank");
+        }
+    };
+
     return (
         <div className="grid grid-cols-2 gap-4 w-full">
-
             <ImageModal
                 open={openModal}
                 onClose={() => setOpenModal(false)}
@@ -56,7 +61,7 @@ const TextImageBlock = ({ block, updateBlock }) => {
                 {image ? (
                     <div className="flex items-center justify-between bg-gray-100 px-4 py-2 rounded-xl border">
                         <span className="text-sm text-blue-600 underline break-all cursor-pointer"
-                                onClick={() => window.open(block.content, "_blank")}>
+                                onClick={openLink}>
                             {image}
                         </span>
 

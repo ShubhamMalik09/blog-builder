@@ -3,12 +3,6 @@ import ImageModal from '../ImageModal';
 
 const ImageBlock = ({ block, updateBlock }) => {
     const [openModal, setOpenModal] = useState(false);
-    const updateImage = (file) => {
-        if (!file) return;
-
-        const url = URL.createObjectURL(file); // FAST + NO BASE64
-        updateBlock(block.id, url);
-    };
 
     const handleSelect = (url) => {
         updateBlock(block.id, url);
@@ -16,6 +10,12 @@ const ImageBlock = ({ block, updateBlock }) => {
 
     const clearImage = () => {
         updateBlock(block.id, "");
+    };
+
+    const openLink = () => {
+        if (typeof window !== "undefined" && block.content) {
+            window.open(block.content, "_blank");
+        }
     };
 
   return (
@@ -28,7 +28,7 @@ const ImageBlock = ({ block, updateBlock }) => {
         {block.content ? (
             <div className="flex items-center justify-between bg-gray-100 px-4 py-2 rounded-xl border">
                 <span className="text-sm text-blue-600 underline break-all cursor-pointer"
-                        onClick={() => window.open(block.content, "_blank")}>
+                        onClick={openLink}>
                     {block.content}
                 </span>
 
