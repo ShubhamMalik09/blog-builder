@@ -17,7 +17,6 @@ export default function MarkdownPreview({ markdown, title }) {
           table {
             width: 100%;
             border-collapse: collapse;
-            margin: 24px 0;
             table-layout: fixed;
           }
 
@@ -28,7 +27,6 @@ export default function MarkdownPreview({ markdown, title }) {
           td {
             border: none;
             width: 50%;
-            padding: 16px;
             vertical-align: middle;       /* CENTER CONTENT VERTICALLY */
             text-align: center;           /* CENTER INLINE TEXT/IMAGES */
           }
@@ -36,7 +34,6 @@ export default function MarkdownPreview({ markdown, title }) {
           td img {
             max-width: 100%;
             height: auto;
-            border-radius: 12px;
             display: block;
             margin-left: auto;
             margin-right: auto;
@@ -55,6 +52,18 @@ export default function MarkdownPreview({ markdown, title }) {
               display: block;
             }
           }
+          article ul, 
+          article ol {
+            display: block !important;
+            list-style-position: inside !important;
+            padding-left: 1.25rem !important;
+          }
+
+          article ul li,
+          article ol li {
+            display: list-item !important;
+            margin-bottom: 0.5rem !important;
+          }
         `}</style>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
@@ -68,11 +77,11 @@ export default function MarkdownPreview({ markdown, title }) {
           }}
           components={{
             table: ({node, ...props}) => (
-              <table {...props} className="rounded-lg shadow-sm" />
+              <table {...props} className="rounded-lg" />
             ),
             tr: ({node, ...props}) => <tr {...props} />,
             th: ({node, ...props}) => (
-              <th className="bg-gray-100 font-semibold text-gray-800 text-left" {...props} />
+              <th className="text-gray-700 text-center" {...props} />
             ),
             td: ({node, ...props}) => (
               <td className="align-top" {...props} />
@@ -101,7 +110,7 @@ export default function MarkdownPreview({ markdown, title }) {
             p: ({node, ...props}) => <p className="text-gray-700 leading-relaxed mb-4" {...props} />,
             ul: ({node, ...props}) => <ul className="list-disc pl-6 mb-4 space-y-2" {...props} />,
             ol: ({node, ...props}) => <ol className="list-decimal pl-6 mb-4 space-y-2" {...props} />,
-            li: ({node, ...props}) => <li className="text-gray-700" {...props} />,
+            li: ({node, ...props}) => (<li {...props} className="block text-gray-700 leading-relaxed" />),
             blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-600 my-4 bg-blue-50 py-2" {...props} />,
             code: ({node, inline, ...props}) => 
               inline 

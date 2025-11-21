@@ -4,18 +4,59 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { login } from "@/lib/api/auth";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setLoading(true);
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
 
-    setTimeout(() => setLoading(false), 1500);
-  };
+        try {
+            const payload = {
+                username,
+                password
+            };
+
+            const res = await login(payload)
+
+            if (!res.data?.success) {
+                toast.error(res.data?.message || "Login failed");
+                setLoading(false);
+                return;
+            }
+
+            const data = res.data.data;
+
+            // Save auth data to localStorage
+            localStorage.setItem("username", payload.username);
+            localStorage.setItem("token", data.access_token);
+
+            toast.success("Login successful!");
+
+            window.location.href = "/";   
+
+        } catch (error) {
+            toast.error("Login failed", {
+                description: error?.response?.data?.message || error.message,
+            });
+
+        } finally {
+            setLoading(false);
+        }
+    };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const username = localStorage.getItem('username');
+    if (token && username) router.replace("/");
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
@@ -34,6 +75,8 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label>Email</Label>
               <Input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 type="email"
                 placeholder="you@example.com"
                 className="h-11 rounded-xl"
@@ -43,6 +86,8 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label>Password</Label>
               <Input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 type="password"
                 placeholder="••••••••"
                 className="h-11 rounded-xl"

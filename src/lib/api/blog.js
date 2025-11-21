@@ -8,8 +8,8 @@ export function updateBlog(id, payload) {
     return api.put(`/posts/${id}`, payload);
 }
 
-export function archiveBlog(id) {
-    return api.post(`/posts/${id}/archive`);
+export function archiveBlog(id, payload) {
+    return api.post(`/posts/${id}/archive`, payload);
 }
 
 export function getBlog(id) {
@@ -20,14 +20,18 @@ export function getAllBlogs(params = {}) {
     return api.get("/posts", { params });
 }
 
-export function publishBlog(id) {
-    return api.post(`/posts/${id}/publish`);
+export function publishBlog(id, payload) {
+    return api.post(`/posts/${id}/publish`, payload);
 }
 
-export function unpublishBlog(id){
-    return api.post(`/posts/${id}/unpublish`);
+export function unpublishBlog(id, payload){
+    return api.post(`/posts/${id}/unpublish`, payload);
 }
 
-export function unarchiveBlog(id){
-    return api.post(`/posts/${id}/unpublish`);
+export function unarchiveBlog(id, payload){
+    return api.post(`/posts/${id}/unpublish`, payload);
+}
+
+export function getBlogBySlug(slug){
+    return api.get(`/posts/slug/${slug}`)
 }

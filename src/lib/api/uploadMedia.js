@@ -6,10 +6,11 @@ export function uploadMedia(file) {
 
     const formData = new FormData();
     formData.append("file", file);
-    return axios.post("https://5b110fa4b776.ngrok-free.app/api/v1/media/upload", formData, {
+    return axios.post(`${process.env.NEXT_PUBLIC_API_URL}/media/upload`, formData, {
         headers: {
-        "Content-Type": "multipart/form-data",
-        "ngrok-skip-browser-warning": "true",
+            "Content-Type": "multipart/form-data",
+            "ngrok-skip-browser-warning": "true",
+            "Authorization": `Bearer ${localStorage.getItem('token')}`
         },
     });
 

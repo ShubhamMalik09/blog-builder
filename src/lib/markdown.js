@@ -21,7 +21,7 @@ export function blocksToMarkdown(blocks) {
         return block.content.split('\n')
           .map(item => item.trim())
           .filter(item => item)
-          .map(item => item.startsWith('•') ? item : `• ${item}`)
+          .map(item => `- ${item.replace(/^[-*•]\s*/, "")}`)
           .join('\n') + '\n'
       
       case 'quote':
@@ -231,6 +231,10 @@ export function markdownToBlocks(markdown) {
     } else if (currentList) {
       blocks.push(currentList);
       currentList = null;
+    }
+
+    if (/^\|\s*-+\s*\|\s*-+\s*\|$/.test(raw)) {
+      continue; // skip the row and do NOT add paragraph
     }
 
     // -----------------------------

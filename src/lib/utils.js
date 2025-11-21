@@ -10,4 +10,9 @@ export const getDefaultContent = (type) => {
   return defaults[type] || ''
 }
 
+export const logout = () =>{
+  localStorage.clear();
+  window.location.href = "/login";
+}
+
 export const generateId = () => crypto.randomUUID();

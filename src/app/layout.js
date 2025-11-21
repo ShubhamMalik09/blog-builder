@@ -1,9 +1,12 @@
+"use client"
 
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./provider";
 import TagInitializer from "@/components/TagInitialiser";
 import { Toaster } from "sonner";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { usePathname } from "next/navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,15 +19,20 @@ const geistMono = Geist_Mono({
 });
 
 export default function RootLayout({ children }) {
-
+  const pathname = usePathname();
+  const isLoginPage = pathname === "/login";
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <TagInitializer />
-          {children}
+          {isLoginPage ? (children) : (
+            <ProtectedRoute>
+              <TagInitializer />
+              {children}
+            </ProtectedRoute>
+          )}
           <Toaster/>
         </Providers>
       </body>

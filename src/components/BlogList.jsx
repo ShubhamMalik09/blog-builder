@@ -5,23 +5,14 @@ import Link from 'next/link'
 import { FileText, Trash2, Eye, Edit, Clock, Calendar, Tag, Loader2 } from 'lucide-react'
 import { Button } from './ui/button'
 import { archiveBlog, getAllBlogs, publishBlog, unarchiveBlog, unpublishBlog } from '@/lib/api/blog'
-import { makeSelectTagById } from '@/store/slices/tagSlice'
 import { useSelector } from 'react-redux'
 import { toast } from 'sonner'
 
-export default function BlogList() {
+export default function BlogList({ page, limit, setTotalCount }) {
   const { primaryTags, industries } = useSelector(state => state.tags)
   const [blogs, setBlogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  // const getTagName = useSelector(makeSelectTagById);
-
-  // console.log('Primary tags:', useSelector(state => state.tags.primary));
-  // console.log('Secondary tags:', useSelector(state => state.tags.secondary));
-
-  // console.log('Blog data:', blogs);
-  
 
 
   useEffect(() => {
@@ -35,11 +26,14 @@ export default function BlogList() {
       
       const response = await getAllBlogs({
         sort_by: 'updated_at',
-        sort_order: 'desc'
+        sort_order: 'desc',
+        page_size: limit,
+        page: page
       })
       
       if (response.data.success) {
-        setBlogs(response.data.data)
+        setBlogs(response.data.data);
+        setTotalCount(response.data.total)
       } else {
         toast.error('Failed to load blogs', {
           description: result.data.error
@@ -60,7 +54,7 @@ export default function BlogList() {
   const publishHandler = async (id) => {
     try{
       setLoading(true);
-      const res = await publishBlog(id);
+      const res = await publishBlog(id,{ username: localStorage.getItem('username')});
   
       if (!res?.data?.success) {
         toast.error("Failed to publish blog",{
@@ -84,7 +78,7 @@ export default function BlogList() {
   const unpublishHandler = async (id) => {
     try{
       setLoading(true);
-      const res = await unpublishBlog(id);
+      const res = await unpublishBlog(id, { username: localStorage.getItem('username')});
     
       if (!res?.data?.success) {
         toast.error("Failed to unpublish blog",{
@@ -108,7 +102,7 @@ export default function BlogList() {
   const archiveHandler = async (id) => {
     try{
       setLoading(true);
-      const res = await archiveBlog(id);
+      const res = await archiveBlog(id, { username: localStorage.getItem('username')});
   
       if (!res?.data?.success) {
         toast.error("Failed to archive blog",{
@@ -132,7 +126,7 @@ export default function BlogList() {
   const unarchiveHandler = async (id) => {
     try{
       setLoading(true);
-      const res = await unarchiveBlog(id);
+      const res = await unarchiveBlog(id, { username: localStorage.getItem('username')});
       if (!res?.data?.success) {
         toast.error("Failed to unarchive blog",{
           description: result.data?.error

@@ -19,7 +19,8 @@ const StoredBlogEditorPage = () => {
     ])
     const tagsLoaded = primaryTags.length > 0 && industries.length > 0;
 
-    const getBlogData = async(id) =>{
+    const getBlogData = async() =>{
+        setLoaded(false);
         try{
             const result = await getBlog(id);
             if(result.data.success){
@@ -43,7 +44,7 @@ const StoredBlogEditorPage = () => {
 
     useEffect(() => {
         if (!id || !tagsLoaded) return;
-        getBlogData(id);
+        getBlogData();
 
         // const list = JSON.parse(localStorage.getItem("blogList") || "[]");
         // const found = list.find((b) => b.id === id);
@@ -81,6 +82,9 @@ const StoredBlogEditorPage = () => {
             initialPrimaryTag={primaryTags.find(tag => tag.id == blogData.primary_tag_id)}
             initialSecondayTags={industries.filter(industry => blogData.industry_ids.includes(industry.id))}
             initialBlocks={blocks} // We'll parse below
+            getBlogData = {getBlogData}
+            is_archived={blogData.is_archived}
+            is_published={blogData.is_published}
         />
     )
 }

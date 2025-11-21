@@ -5,10 +5,14 @@ import BlogList from '@/components/BlogList';
 import { Button } from '@/components/ui/button';
 import { PlusIcon } from 'lucide-react';
 import Link from 'next/link';
+import { logout } from '@/lib/utils';
 
 export default function Home() {
-  const [page, setPage] = useState(1);        // current page
-  const [limit] = useState(10);              // blogs per page
+  const [page, setPage] = useState(1);
+  const limit = 20;  
+  const [ totalCount, setTotalCount ] = useState(0);   
+  
+  const hasNext = page * limit < totalCount;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -18,17 +22,24 @@ export default function Home() {
             Wokelo Blog Builder
           </h1>
 
-          <Button className="bg-black text-white hover:bg-gray-800">
-            <Link href="/editor/new" className="flex w-full gap-1 items-center">
-              <PlusIcon />
-              Create Blog
-            </Link>
-          </Button>
+          <div className='flex items-center justify-center gap-2'>
+            <Button className="bg-black text-white hover:bg-gray-800">
+              <Link href="/editor/new" className="flex w-full gap-1 items-center">
+                <PlusIcon />
+                Create Blog
+              </Link>
+            </Button>
+
+            <Button variant={"destructive"} onClick={logout} className={' cursor-pointer'}>
+              Logout
+            </Button>
+
+          </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-12">
-        <BlogList page={page} limit={limit} />
+        <BlogList page={page} limit={limit} setTotalCount={setTotalCount} />
 
         {/* Pagination Controls */}
         <div className="flex items-center justify-center gap-4 mt-10">
@@ -47,6 +58,7 @@ export default function Home() {
 
           <Button
             variant="outline"
+            disabled={!hasNext}
             onClick={() => setPage(page + 1)}
             className="rounded-lg"
           >

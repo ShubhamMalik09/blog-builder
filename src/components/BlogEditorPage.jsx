@@ -12,12 +12,12 @@ import TagModal from "./TagModal";
 import { Badge } from "./ui/badge";
 import ImageModal from "./ImageModal";
 import { generateId } from "@/lib/utils";
-import { createBlog, updateBlog } from "@/lib/api/blog";
+import { archiveBlog, createBlog, publishBlog, unarchiveBlog, unpublishBlog, updateBlog } from "@/lib/api/blog";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { toast } from "sonner"
 
-export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle, initialCover, initialDescription, initialPrimaryTag, initialSecondayTags, id}) {
+export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle, initialCover, initialDescription, initialPrimaryTag, initialSecondayTags, id, is_published, is_archived, getBlogData}) {
   const isClient = typeof window !== "undefined";
   const router = useRouter()
   const { primaryTags, industries } = useSelector(state => state.tags);
@@ -28,7 +28,9 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
   const [ description, setDescription ] = useState(initialDescription || '');
   const [selectedPrimary, setSelectedPrimary] = useState( initialPrimaryTag || null);
   const [selectedSecondary, setSelectedSecondary] = useState(initialSecondayTags || []);
-  const [isSaving, setIsSaving] = useState(false)
+  const [isSaving, setIsSaving] = useState(false);
+  const [ isPublishing, setIsPublishing ] = useState(false);
+  const [ isArchiving, setIsArchiving ] = useState(false);
   const [blocks, setBlocks] = useState(initialBlocks);
   const [loading, setLoading] = useState(true);
   const blocksRef = useRef(blocks);
@@ -86,11 +88,110 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
     setLoading(false);
   }, []);
 
+  const publishHandler = async (id) => {
+    try{
+      setIsPublishing(true);
+      const payload = {
+        username : localStorage.getItem('username')
+      }
+      const res = await publishBlog(id, payload);
+  
+      if (!res?.data?.success) {
+        toast.error("Failed to publish blog",{
+          description: result.data?.error
+        });
+        return false;
+      }
+  
+      toast.success("Blog published successfully");
+      return true;
+    } catch(error){
+      toast.error('Error publishing blog', {
+        description: error.message
+      })
+    } finally{
+      await getBlogData();
+      setIsPublishing(false);
+    }
+  };
+
+  const unpublishHandler = async (id) => {
+    try{
+      setIsPublishing(true);
+      const res = await unpublishBlog(id, { username: localStorage.getItem('username')});
+    
+      if (!res?.data?.success) {
+        toast.error("Failed to unpublish blog",{
+          description: result.data?.error
+        });
+        return false;
+      }
+    
+      toast.success("Blog unpublished successfully");
+      return true;
+    } catch(err){
+      toast.error('Error unpublishing blog', {
+        description: (err.response?.data?.error || err.message )
+      })
+    } finally{
+      await getBlogData();
+      setIsPublishing(false);
+    }
+  };
+  
+  const archiveHandler = async (id) => {
+    try{
+      setIsArchiving(true);
+      const res = await archiveBlog(id, { username: localStorage.getItem('username')});
+  
+      if (!res?.data?.success) {
+        toast.error("Failed to archive blog",{
+          description: result.data?.error
+        });
+        return false;
+      }
+  
+      toast.success("Blog archived successfully");
+      return true;
+    } catch(err){
+      toast.error('Error archiving blog', {
+        description: (err.response?.data?.error || err.message )
+      })
+    } finally{
+      await getBlogData();
+      setIsArchiving(false);
+    }
+  };
+
+  const unarchiveHandler = async (id) => {
+    try{
+      setIsArchiving(true);
+      const res = await unarchiveBlog(id, { username: localStorage.getItem('username')});
+      if (!res?.data?.success) {
+        toast.error("Failed to unarchive blog",{
+          description: result.data?.error
+        });
+        return false;
+      }
+  
+      toast.success("Blog unarchived successfully");
+      return true;
+    } catch(err){
+      toast.error('Error unarchiving blog', {
+        description: (err.response?.data?.error || err.message )
+      })
+    } finally{
+      await getBlogData();
+      setIsArchiving(false);
+    }
+  };
+
   const handleSave = async() => {
     setIsSaving(true)
     const markdown = blocksToMarkdown(blocks)
 
     const payload = {
+      username: localStorage.getItem('username'),
       title: title || "",
       slug : title?.trim()?.toLowerCase()?.split(' ')?.join('-'),
       primary_tag_id:  selectedPrimary.id || null,
@@ -172,7 +273,81 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
                     Live Preview
                   </h2>
                   <div className="flex gap-3 w-full items-center justify-end">
-                    <Button className="px-6 py-2 bg-black text-white rounded-lg font-medium hover:shadow-lg hover:bg-gray-800 cursor-pointer transition-all flex items-center gap-2 disabled:opacity-50" onClick={handleSave} disabled={isSaving}>
+                    {mode === "new" ? (
+                      <Button
+                        className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:shadow-lg hover:bg-red-600 cursor-pointer transition-all"
+                        onClick={() => {
+                          if (confirm("Discard all changes? This cannot be undone.")) {
+                            localStorage.removeItem("blog-draft");
+                            setTitle("");
+                            setCoverImage(null);
+                            setDescription("");
+                            setSelectedPrimary(null);
+                            setSelectedSecondary([]);
+                            setBlocks([
+                              { id: generateId(), type: "heading1", content: "" },
+                              { id: generateId(), type: "paragraph", content: "" }
+                            ]);
+                            toast.success("Draft discarded");
+                          }
+                        }}
+                      >
+                        Discard
+                      </Button>
+                    ) : (
+                      <div className="flex gap-1">
+                        {is_archived ? (
+                          <button
+                            onClick={() => unarchiveHandler(blog.id)}
+                            disabled={isArchiving || isPublishing || isSaving}
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
+                          >
+                            {isArchiving ? "Unarchiving..." : "Unarchive"}
+                          </button>
+                        ) : (
+                          <>
+                            {is_published ? (
+                              <>
+                                <button
+                                  disabled={isArchiving || isPublishing || isSaving}
+                                  onClick={() => unpublishHandler(blog.id)}
+                                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-colors"
+                                >
+                                  { isPublishing ? "Unpublishing..." : "Unpublish"}
+                                </button>
+
+                                <button
+                                  onClick={() => archiveHandler(blog.id)}
+                                  disabled={isArchiving || isPublishing || isSaving}
+                                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                >
+                                  {isArchiving ? "Archiving..." : "Archive"}
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => publishHandler(blog.id)}
+                                  disabled={isArchiving || isPublishing || isSaving}
+                                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                                >
+                                  { isPublishing ? "Publishing..." : "Publish"}
+                                </button>
+
+                                <button
+                                  onClick={() => archiveHandler(blog.id)}
+                                  disabled={isArchiving || isPublishing || isSaving}
+                                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                >
+                                  { isArchiving ? 'Archiving...' : 'Archive'}
+                                </button>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                    <Button className="px-6 py-2 bg-black text-white rounded-lg font-medium hover:shadow-lg hover:bg-gray-800 cursor-pointer transition-all flex items-center gap-2 disabled:opacity-50" onClick={handleSave} disabled={isSaving || isPublishing || isArchiving}>
                       <Save className="w-4 h-4" />
                       {
                         mode === 'new' ? (
