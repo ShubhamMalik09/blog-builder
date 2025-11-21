@@ -5,13 +5,9 @@ import remarkGfm from 'remark-gfm'
 import rehypeRaw from "rehype-raw";
 
 
-export default function MarkdownPreview({ markdown, title }) {
+export default function MarkdownPreview({ markdown }) {
   return (
     <div className="p-8">
-      <div className="mb-6 pb-4 border-b border-gray-200">
-        <p className="text-4xl font-bold mt-1 text-center">{title}</p>
-      </div>
-      
       <article className="prose prose-lg max-w-none">
         <style>{`
           table {

@@ -253,8 +253,10 @@ export default function BlogList({ page, limit, setTotalCount }) {
               )}
             </div>
             
-            <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">
-              {blog.title}
+            <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2 hover:text-blue-500">
+              <Link href={`/blog/${blog.slug}`}>
+                {blog.title}
+              </Link>
             </h3>
             
             {blog.description && (

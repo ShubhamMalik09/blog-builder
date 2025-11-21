@@ -507,7 +507,10 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
                 </div>
 
                 <div className="w-1/2 overflow-y-auto bg-white">
-                    <MarkdownPreview markdown={markdown} title={title} />
+                   <div className="mb-6 pb-4 border-b border-gray-200">
+                      <p className="text-4xl font-bold mt-1 text-center">{title}</p>
+                    </div>
+                    <MarkdownPreview markdown={markdown} />
                 </div>
             </div>
         )}

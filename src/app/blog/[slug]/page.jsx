@@ -1,17 +1,27 @@
-import { notFound } from "next/navigation";
+"use client"
+
+import { notFound, useParams, useSearchParams } from "next/navigation";
 import { getBlogBySlug } from "@/lib/api/blog";
 import MarkdownPreview from "@/components/MarkdownPreview";
+import { useEffect, useState } from "react";
 
-export default async function BlogPostPage({ params }) {
-  const { slug } = params;
+const GetPostBySlugPage =  () => {
+  const { slug } = useParams();
+  const [ post, setPost ] = useState(null);
 
-  const res = await getBlogBySlug(slug);
-
-  const post = res?.data?.data;
-
-  if (!post || !post.is_published) {
-    notFound();
+  const init = async() =>{
+    if(!slug) return;
+    const res = await getBlogBySlug(slug);
+    if(res.data.data){
+        setPost(res?.data?.data);
+    }
   }
+
+  useEffect(()=>{
+    init();
+  },[slug]);
+
+  if(!post) return null;
 
   return (
     <main className="mx-auto max-w-3xl py-10">
@@ -56,3 +66,5 @@ export default async function BlogPostPage({ params }) {
     </main>
   );
 }
+
+export default GetPostBySlugPage;

@@ -33,7 +33,7 @@ export default function RootLayout({ children }) {
               {children}
             </ProtectedRoute>
           )}
-          <Toaster/>
+          <Toaster  position="top-center" richColors/>
         </Providers>
       </body>
     </html>
