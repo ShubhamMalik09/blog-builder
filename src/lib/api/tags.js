@@ -18,6 +18,6 @@ export function getPrimaryTags() {
 // }
 
 export function getIndustries() {
-  return api.get("/tags/industries");
+  return api.get(`/tags/industries?page_size=100`);
 }
 

@@ -11,8 +11,10 @@ import { generateId, getDefaultContent } from '@/lib/utils'
 export default function BlockEditor({ blogId, setBlocks, blocks }) {
   const [draggedBlock, setDraggedBlock] = useState(null)
   const [showBlockMenu, setShowBlockMenu] = useState(null)
+  const containerRef = useRef(null)
 
   const updateBlock = (id, content) => {
+    const scrollTop = containerRef.current?.scrollTop || 0
     setBlocks((prev) =>
       prev.map((b) => {
         if (b.id !== id) return b;
@@ -23,6 +25,12 @@ export default function BlockEditor({ blogId, setBlocks, blocks }) {
         return { ...b, content };
       })
     );
+
+    requestAnimationFrame(() => {
+      if (containerRef.current) {
+        containerRef.current.scrollTop = scrollTop
+      }
+    })
   }
 
   const deleteBlock = (id) => {
@@ -80,9 +88,9 @@ export default function BlockEditor({ blogId, setBlocks, blocks }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 pb-54" ref={containerRef} style={{ scrollBehavior: 'auto' }}>
 
-      <main className="max-w-4xl mx-auto px-6 py-12">
+      <main className="max-w-4xl mx-auto px-6 py-20">
         <div className="space-y-2">
           {blocks.map((block) => (
             <Block key={block.id} block={block} deleteBlock={deleteBlock} updateBlock={updateBlock} addBlock={addBlock} showBlockMenu={showBlockMenu} setShowBlockMenu={setShowBlockMenu} handleDragOver={handleDragOver} handleDragStart={handleDragStart} handleDrop={handleDrop}/>

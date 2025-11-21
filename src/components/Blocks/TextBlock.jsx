@@ -28,7 +28,7 @@ const TextBlock = ({ block, updateBlock, addBlock }) => {
             updateBlock(block.id, e.target.value)
             autoResize(e.target);
         }}
-        onKeyDown={(e) => handleKeyDown(e, block)}
+        // onKeyDown={(e) => handleKeyDown(e, block)}
         // rows={block.content.split('\n').length || 1}
         placeholder={getDefaultContent(block.type)}
         ref={(el) => autoResize(el)}

@@ -187,6 +187,26 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
   };
 
   const handleSave = async() => {
+    if(!selectedPrimary?.id){
+      toast.error('Primary Tag is required');
+      return;
+    }
+    if(!selectedSecondary || selectedSecondary?.length<1){
+      toast.error("Industries is required");
+      return;
+    }
+    if(!title){
+      toast.error("Title is required");
+      return;
+    }
+    if(!coverImage){
+      toast.error("Cover Image is required");
+      return;
+    }
+    if(!description){
+      toast.error("Description is required");
+      return;
+    }
     setIsSaving(true)
     const markdown = blocksToMarkdown(blocks)
 
@@ -194,11 +214,11 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
       username: localStorage.getItem('username'),
       title: title || "",
       slug : title?.trim()?.toLowerCase()?.split(' ')?.join('-'),
-      primary_tag_id:  selectedPrimary.id || null,
+      primary_tag_id:  selectedPrimary?.id || null,
       cover_image_url: coverImage || "",
       description: description || "",
       content_markdown: markdown,
-      industry_ids: selectedSecondary.map(tag => tag.id) || [],
+      industry_ids: selectedSecondary.map(tag => tag?.id) || [],
     };
 
     if(mode=='new'){
@@ -215,8 +235,8 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
       const result = await createBlog(payload)
       console.log(result.data);
       if(result.data.success){
+        localStorage.removeItem("blog-draft");
         toast.success("Blog Created Successfully")
-        localStorage.removeItem('blog-draft');
         router.push(`/editor/${result.data.data.id}`)
       }
       else{

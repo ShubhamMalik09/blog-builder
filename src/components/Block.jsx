@@ -16,7 +16,6 @@ const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, han
         const isTextObject = typeof block.content === "object";
 
         const text = isTextObject ? block.content.text : block.content;
-
         if (!text) return;
 
         // get where cursor was using DOM
@@ -41,9 +40,9 @@ const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, han
         text.substring(0, start) + formatted + text.substring(end);
 
         if (isTextObject) {
-        updateBlock(block.id, { text: newText });
+            updateBlock(block.id, { text: newText });
         } else {
-        updateBlock(block.id, newText);
+            updateBlock(block.id, newText);
         }
     };
 
