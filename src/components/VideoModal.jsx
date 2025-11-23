@@ -7,10 +7,18 @@ import { Input } from "@/components/ui/input";
 import { uploadMedia } from "@/lib/api/uploadMedia";
 
 export default function VideoModal({ open, onClose, onSelect }) {
+  const VIDEO_SIZE_IN_MB = 50;
+  const VIDEO_MAX_SIZE = VIDEO_SIZE_IN_MB * 1024 * 1024;
   const [urlInput, setUrlInput] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
   const handleUpload = async (file) => {
+    if (file.size > VIDEO_MAX_SIZE) {
+      toast.error("Video too large", {
+        description: `Max allowed size is ${VIDEO_SIZE_IN_MB}MB. Your image is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`,
+      });
+      return;
+    }
       setIsUploading(true);
       try{
         const result = await uploadMedia(file);
@@ -35,8 +43,7 @@ export default function VideoModal({ open, onClose, onSelect }) {
         </DialogHeader>
 
         <div className="space-y-5">
-          {/* Enter URL */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <label className="text-sm font-medium">Enter Video URL</label>
             <Input
               value={urlInput}
@@ -53,7 +60,7 @@ export default function VideoModal({ open, onClose, onSelect }) {
             >
               Use URL
             </Button>
-          </div>
+          </div> */}
 
           <div className="border-t pt-4">
             <label className="text-sm font-medium">Or Upload Video</label>
