@@ -5,13 +5,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadMedia } from "@/lib/api/uploadMedia";
-// import { uploadImageToServer } from "@/lib/upload/uploadImage";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 
 export default function ImageModal({ open, onClose, onSelect }) {
   const IMAGE_SIZE_IN_MB = 5;
   const MAX_FILE_SIZE = IMAGE_SIZE_IN_MB * 1024 * 1024;
   const [urlInput, setUrlInput] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleUpload = async (file) => {
     if (file.size > MAX_FILE_SIZE) {
@@ -20,18 +22,29 @@ export default function ImageModal({ open, onClose, onSelect }) {
       });
       return;
     }
+    
     setIsUploading(true);
-    try{
-      const result = await uploadMedia(file);
+    setUploadProgress(0);
+    
+    try {
+      const result = await uploadMedia(file, (progress) => {
+        setUploadProgress(progress);
+      });
+      
       if(result.data.success){
         onSelect(result.data.data.url);
         onClose();
+        setUploadProgress(0);
       } else{
-        window.alert(`unable to upload media ${result.data.error}`);
+        toast.error("Upload failed", {
+          description: result.data.error
+        });
       }
     } catch(error){
-      console.error(error)
-      // window.alert(`error uploading image ${error.message}`);
+      console.error(error);
+      toast.error("Upload failed", {
+        description: error.message
+      });
     } finally{
       setIsUploading(false);
     }
@@ -45,37 +58,26 @@ export default function ImageModal({ open, onClose, onSelect }) {
         </DialogHeader>
 
         <div className="space-y-2">
-          {/* <div className="space-y-2">
-            <label className="text-sm font-medium">Enter Image URL</label>
-            <Input
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              placeholder="https://example.com/image.png"
-            />
-            <Button
-              onClick={() => {
-                if (urlInput.trim()) {
-                  onSelect(urlInput.trim());
-                  onClose();
-                }
-              }}
-            >
-              Use URL
-            </Button>
-          </div> */}
-
           <div className="border-t pt-4">
-            <label className="text-sm font-medium">Or Upload Image</label>
+            <label className="text-sm font-medium">Upload Image</label>
 
-            <label className="cursor-pointer mt-2 flex items-center justify-center border-2 border-dashed border-gray-300 p-4 rounded-lg hover:bg-gray-50">
+            <label className="cursor-pointer mt-2 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 p-4 rounded-lg hover:bg-gray-50">
               <span>{isUploading ? "Uploading..." : "Click to Upload"}</span>
               <input
                 type="file"
                 accept="image/*"
                 className="hidden"
+                disabled={isUploading}
                 onChange={(e) => handleUpload(e.target.files[0])}
               />
             </label>
+            
+            {isUploading && (
+              <div className="mt-4 space-y-2">
+                <Progress value={uploadProgress} className="w-full" />
+                <p className="text-sm text-center text-gray-600">{uploadProgress}%</p>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
