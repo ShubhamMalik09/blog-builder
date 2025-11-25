@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { uploadMedia } from "@/lib/api/uploadMedia";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -11,7 +9,6 @@ import { toast } from "sonner";
 export default function ImageModal({ open, onClose, onSelect }) {
   const IMAGE_SIZE_IN_MB = 5;
   const MAX_FILE_SIZE = IMAGE_SIZE_IN_MB * 1024 * 1024;
-  const [urlInput, setUrlInput] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 

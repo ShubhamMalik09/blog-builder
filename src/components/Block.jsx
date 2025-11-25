@@ -1,10 +1,8 @@
-import { getDefaultContent } from '@/lib/utils'
 import { Plus, GripVertical, Trash2 } from 'lucide-react'
 import React from 'react'
 import TextBlock from './Blocks/TextBlock'
 import ImageBlock from './Blocks/ImageBlock'
 import VideoBlock from './Blocks/VideoBlock'
-import { blockTypes } from '@/lib/data'
 import { Button } from './ui/button'
 import TextImageBlock from './Blocks/TextImageBlock'
 import ImageTextBlock from './Blocks/ImageTextBlock'
@@ -141,17 +139,6 @@ const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, han
 
             {showBlockMenu === block.id && (
                 <BlockMenu block={block} addBlock={addBlock}/>
-                // <div className="absolute top-8 bg-white rounded-lg shadow-xl border border-gray-200 p-2 z-10 min-w-[200px]">
-                // {blockTypes.map(({ type, icon: Icon, label }) => (
-                //     <Button key={type} variant={'ghost'}
-                //         onClick={() => addBlock(type, block.id)}
-                //         className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg text-left transition-colors"
-                //         >
-                //         <Icon className="w-4 h-4 text-gray-600" />
-                //         <span className="text-sm font-medium text-gray-700">{label}</span>
-                //     </Button>
-                // ))}
-                // </div>
             )}
         </div>
     </div>
