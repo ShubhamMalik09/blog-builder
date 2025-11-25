@@ -318,7 +318,7 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
                       <div className="flex gap-1">
                         {is_archived ? (
                           <button
-                            onClick={() => unarchiveHandler(blog.id)}
+                            onClick={() => unarchiveHandler(id)}
                             disabled={isArchiving || isPublishing || isSaving}
                             className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
                           >
@@ -330,14 +330,14 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
                               <>
                                 <button
                                   disabled={isArchiving || isPublishing || isSaving}
-                                  onClick={() => unpublishHandler(blog.id)}
+                                  onClick={() => unpublishHandler(id)}
                                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-colors"
                                 >
                                   { isPublishing ? "Unpublishing..." : "Unpublish"}
                                 </button>
 
                                 <button
-                                  onClick={() => archiveHandler(blog.id)}
+                                  onClick={() => archiveHandler(id)}
                                   disabled={isArchiving || isPublishing || isSaving}
                                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                                 >
@@ -347,7 +347,7 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
                             ) : (
                               <>
                                 <button
-                                  onClick={() => publishHandler(blog.id)}
+                                  onClick={() => publishHandler(id)}
                                   disabled={isArchiving || isPublishing || isSaving}
                                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
                                 >
@@ -355,7 +355,7 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
                                 </button>
 
                                 <button
-                                  onClick={() => archiveHandler(blog.id)}
+                                  onClick={() => archiveHandler(id)}
                                   disabled={isArchiving || isPublishing || isSaving}
                                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                                 >

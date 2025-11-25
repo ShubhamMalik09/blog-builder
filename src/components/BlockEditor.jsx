@@ -6,6 +6,7 @@ import { blocksToMarkdown, markdownToBlocks } from '@/lib/markdown'
 import { Button } from './ui/button'
 import Block from './Block'
 import { generateId, getDefaultContent } from '@/lib/utils'
+import { useRef } from 'react'
 // import { saveBlog, getBlog } from '@/lib/storage'
 
 export default function BlockEditor({ blogId, setBlocks, blocks }) {
