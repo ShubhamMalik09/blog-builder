@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { FileText, Trash2, Eye, Edit, Clock, Calendar, Tag, Loader2 } from 'lucide-react'
+import { FileText, Edit, Clock, Calendar, Tag, Loader2 } from 'lucide-react'
 import { Button } from './ui/button'
 import { archiveBlog, getAllBlogs, publishBlog, unarchiveBlog, unpublishBlog } from '@/lib/api/blog'
 import { useSelector } from 'react-redux'
@@ -13,36 +13,36 @@ export default function BlogList({ page, limit, setTotalCount }) {
   const [blogs, setBlogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
+  const [loadingBlogs, setLoadingBlogs] = useState({})
 
   useEffect(() => {
     loadBlogs()
-  }, [])
+  }, [page, limit])
 
   const loadBlogs = async () => {
     try {
       setLoading(true)
       setError(null)
-      
+
       const response = await getAllBlogs({
         sort_by: 'updated_at',
         sort_order: 'desc',
         page_size: limit,
         page: page
       })
-      
+
       if (response.data.success) {
-        setBlogs(response.data.data);
+        setBlogs(response.data.data)
         setTotalCount(response.data.total)
       } else {
         toast.error('Failed to load blogs', {
-          description: result.data.error
+          description: response.data.error
         })
         setError('Failed to load blogs')
       }
     } catch (err) {
       toast.error('Unable to load blog', {
-        description: (err.response?.data?.error || err.message )
+        description: (err.response?.data?.error || err.message)
       })
       console.error('Error loading blogs:', err)
       setError(err.response?.data?.error || 'Failed to load blogs')
@@ -52,115 +52,123 @@ export default function BlogList({ page, limit, setTotalCount }) {
   }
 
   const publishHandler = async (id) => {
-    try{
-      setLoading(true);
-      const res = await publishBlog(id,{ username: localStorage.getItem('username')});
-  
+    try {
+      setLoadingBlogs(prev => ({ ...prev, [id]: true }))
+      const res = await publishBlog(id, { username: localStorage.getItem('username') })
+
       if (!res?.data?.success) {
-        toast.error("Failed to publish blog",{
-          description: result.data?.error
-        });
-        return false;
+        toast.error("Failed to publish blog", {
+          description: res.data?.error
+        })
+        return false
       }
-  
-      toast.success("Blog published successfully");
-      return true;
-    } catch(error){
+
+      setBlogs(blogs.map(blog =>
+        blog.id === id
+          ? { ...blog, is_published: true, published_at: new Date().toISOString() }
+          : blog
+      ))
+
+      toast.success("Blog published successfully")
+      return true
+    } catch (error) {
       toast.error('Error publishing blog', {
         description: error.message
       })
-    } finally{
-      await loadBlogs();
-      setLoading(false);
-    }
-  };
-
-  const unpublishHandler = async (id) => {
-    try{
-      setLoading(true);
-      const res = await unpublishBlog(id, { username: localStorage.getItem('username')});
-    
-      if (!res?.data?.success) {
-        toast.error("Failed to unpublish blog",{
-          description: result.data?.error
-        });
-        return false;
-      }
-    
-      toast.success("Blog unpublished successfully");
-      return true;
-    } catch(err){
-      toast.error('Error unpublishing blog', {
-        description: (err.response?.data?.error || err.message )
-      })
-    } finally{
-      await loadBlogs();
-      setLoading(false);
-    }
-  };
-  
-  const archiveHandler = async (id) => {
-    try{
-      setLoading(true);
-      const res = await archiveBlog(id, { username: localStorage.getItem('username')});
-  
-      if (!res?.data?.success) {
-        toast.error("Failed to archive blog",{
-          description: result.data?.error
-        });
-        return false;
-      }
-  
-      toast.success("Blog archived successfully");
-      return true;
-    } catch(err){
-      toast.error('Error archiving blog', {
-        description: (err.response?.data?.error || err.message )
-      })
-    } finally{
-      await loadBlogs();
-      setLoading(false);
-    }
-  };
-
-  const unarchiveHandler = async (id) => {
-    try{
-      setLoading(true);
-      const res = await unarchiveBlog(id, { username: localStorage.getItem('username')});
-      if (!res?.data?.success) {
-        toast.error("Failed to unarchive blog",{
-          description: result.data?.error
-        });
-        return false;
-      }
-  
-      toast.success("Blog unarchived successfully");
-      return true;
-    } catch(err){
-      toast.error('Error unarchiving blog', {
-        description: (err.response?.data?.error || err.message )
-      })
-    } finally{
-      await loadBlogs();
-      setLoading(false);
-    }
-  };
-
-  // const loadBlogs = () =>{
-  //   const list = JSON.parse(localStorage.getItem("blogList") || "[]");
-  //   setBlogs(list);
-  //   setLoading(false);
-  // }
-
-  const getTagName = (id, type) =>{
-    if(type === 'primary'){
-      return (primaryTags.find(tag => tag.id == id))?.name
-    }
-    else if(type === 'industry'){
-      return (industries.find(industry => industry.id == id))?.name
+    } finally {
+      setLoadingBlogs(prev => ({ ...prev, [id]: false }))
     }
   }
 
+  const unpublishHandler = async (id) => {
+    try {
+      setLoadingBlogs(prev => ({ ...prev, [id]: true }))
+      const res = await unpublishBlog(id, { username: localStorage.getItem('username') })
+
+      if (!res?.data?.success) {
+        toast.error("Failed to unpublish blog", {
+          description: res.data?.error
+        })
+        return false
+      }
+
+      setBlogs(blogs.map(blog =>
+        blog.id === id ? { ...blog, is_published: false } : blog
+      ))
+
+      toast.success("Blog unpublished successfully")
+      return true
+    } catch (err) {
+      toast.error('Error unpublishing blog', {
+        description: (err.response?.data?.error || err.message)
+      })
+    } finally {
+      setLoadingBlogs(prev => ({ ...prev, [id]: false }))
+    }
+  }
+
+  const archiveHandler = async (id) => {
+    try {
+      setLoadingBlogs(prev => ({ ...prev, [id]: true }))
+      const res = await archiveBlog(id, { username: localStorage.getItem('username') })
+
+      if (!res?.data?.success) {
+        toast.error("Failed to archive blog", {
+          description: res.data?.error
+        })
+        return false
+      }
+
+      setBlogs(blogs.map(blog =>
+        blog.id === id ? { ...blog, is_archived: true } : blog
+      ))
+
+      toast.success("Blog archived successfully")
+      return true
+    } catch (err) {
+      toast.error('Error archiving blog', {
+        description: (err.response?.data?.error || err.message)
+      })
+    } finally {
+      setLoadingBlogs(prev => ({ ...prev, [id]: false }))
+    }
+  }
+
+  const unarchiveHandler = async (id) => {
+    try {
+      setLoadingBlogs(prev => ({ ...prev, [id]: true }))
+      const res = await unarchiveBlog(id, { username: localStorage.getItem('username') })
+
+      if (!res?.data?.success) {
+        toast.error("Failed to unarchive blog", {
+          description: res.data?.error
+        })
+        return false
+      }
+
+      setBlogs(blogs.map(blog =>
+        blog.id === id ? { ...blog, is_archived: false } : blog
+      ))
+
+      toast.success("Blog unarchived successfully")
+      return true
+    } catch (err) {
+      toast.error('Error unarchiving blog', {
+        description: (err.response?.data?.error || err.message)
+      })
+    } finally {
+      setLoadingBlogs(prev => ({ ...prev, [id]: false }))
+    }
+  }
+
+  const getTagName = (id, type) => {
+    if (type === 'primary') {
+      return (primaryTags.find(tag => tag.id == id))?.name
+    }
+    else if (type === 'industry') {
+      return (industries.find(industry => industry.id == id))?.name
+    }
+  }
 
   const getStatusBadge = (blog) => {
     if (blog?.is_published) {
@@ -184,17 +192,8 @@ export default function BlogList({ page, limit, setTotalCount }) {
     )
   }
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="flex flex-col text-center py-20 w-full items-center justify-center">
-        <Loader2 className="w-16 h-16 text-gray-400 animate-spin mx-auto mb-4" />
-        <p className="text-gray-600">Loading blogs...</p>
-      </div>
-    )
-  }
+  if (loading) return null;
 
-  // Error state
   if (error) {
     return (
       <div className="flex flex-col text-center py-20 w-full items-center justify-center">
@@ -203,7 +202,7 @@ export default function BlogList({ page, limit, setTotalCount }) {
         </div>
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Error loading blogs</h2>
         <p className="text-gray-600 mb-6">{error}</p>
-        <Button 
+        <Button
           onClick={loadBlogs}
           className="w-36 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 hover:cursor-pointer hover:shadow-lg transition-all"
         >
@@ -213,7 +212,6 @@ export default function BlogList({ page, limit, setTotalCount }) {
     )
   }
 
-  // Empty state
   if (blogs.length === 0) {
     return (
       <div className="flex flex-col text-center py-20 w-full items-center justify-center">
@@ -235,8 +233,8 @@ export default function BlogList({ page, limit, setTotalCount }) {
         <div key={blog.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 overflow-hidden">
           {blog.cover_image_url && (
             <div className="w-full h-48 bg-gray-200">
-              <img 
-                src={blog?.cover_image_url} 
+              <img
+                src={blog?.cover_image_url}
                 alt={blog?.title}
                 className="w-full h-full object-cover"
               />
@@ -252,19 +250,19 @@ export default function BlogList({ page, limit, setTotalCount }) {
                 </span>
               )}
             </div>
-            
+
             <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2 hover:text-blue-500">
               <Link href={`/blog/${blog.slug}`}>
                 {blog.title}
               </Link>
             </h3>
-            
+
             {blog.description && (
               <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                 {blog.description}
               </p>
             )}
-            
+
             <div className="flex flex-wrap gap-2 mb-3">
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
                 <Tag className="w-3 h-3" />
@@ -276,27 +274,27 @@ export default function BlogList({ page, limit, setTotalCount }) {
                 </span>
               ))}
             </div>
-            
+
             <div className="flex items-center gap-1 text-xs text-gray-500 mb-4">
               <Calendar className="w-3 h-3" />
-              {blog.published_at 
+              {blog.published_at
                 ? `Published ${new Date(blog?.published_at)?.toLocaleDateString()}`
                 : `Updated ${new Date(blog?.updated_at)?.toLocaleDateString()}`
               }
             </div>
 
             <div className="flex gap-2">
-              {/* ARCHIVED CASE */}
               {blog.is_archived ? (
                 <>
                   <button
                     onClick={() => unarchiveHandler(blog.id)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
+                    disabled={loadingBlogs[blog.id]}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Unarchive
                   </button>
 
-                  <Link 
+                  <Link
                     href={`/editor/${blog.id}`}
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
                   >
@@ -306,44 +304,45 @@ export default function BlogList({ page, limit, setTotalCount }) {
                 </>
               ) : (
                 <>
-                  {/* PUBLISHED */}
                   {blog.is_published ? (
                     <>
                       <button
                         onClick={() => unpublishHandler(blog.id)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-colors"
+                        disabled={loadingBlogs[blog.id]}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Unpublish
                       </button>
 
                       <button
                         onClick={() => archiveHandler(blog.id)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                        disabled={loadingBlogs[blog.id]}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Archive
                       </button>
                     </>
                   ) : (
                     <>
-                      {/* DRAFT */}
                       <button
                         onClick={() => publishHandler(blog.id)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                        disabled={loadingBlogs[blog.id]}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Publish
                       </button>
 
                       <button
                         onClick={() => archiveHandler(blog.id)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                        disabled={loadingBlogs[blog.id]}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Archive
                       </button>
                     </>
                   )}
 
-                  {/* Common Edit Button */}
-                  <Link 
+                  <Link
                     href={`/editor/${blog.id}`}
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
                   >
