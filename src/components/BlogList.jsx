@@ -5,11 +5,11 @@ import Link from 'next/link'
 import { FileText, Edit, Clock, Calendar, Tag } from 'lucide-react'
 import { Button } from './ui/button'
 import { Skeleton } from './ui/skeleton'
-import { archiveBlog, getAllBlogs, publishBlog, unarchiveBlog, unpublishBlog } from '@/lib/api/blog'
+import { archiveBlog, getAllBlogs, publishBlog, unpublishBlog } from '@/lib/api/blog'
 import { useSelector } from 'react-redux'
 import { toast } from 'sonner'
 
-export default function BlogList({ page, limit, setTotalCount, setLoading, setInitialLoading }) {
+export default function BlogList({ page, limit, filters, setTotalCount, setLoading, setInitialLoading }) {
   const { primaryTags, industries } = useSelector(state => state.tags)
   const [blogs, setBlogs] = useState([])
   const [initialLoad, setInitialLoad] = useState(true)
@@ -18,7 +18,7 @@ export default function BlogList({ page, limit, setTotalCount, setLoading, setIn
 
   useEffect(() => {
     loadBlogs()
-  }, [page, limit])
+  }, [page, limit, filters])
 
   const loadBlogs = async () => {
     try {
@@ -29,12 +29,19 @@ export default function BlogList({ page, limit, setTotalCount, setLoading, setIn
       setLoading(true)
       setError(null)
 
-      const response = await getAllBlogs({
-        sort_by: 'updated_at',
-        sort_order: 'desc',
+      const params = {
+        page,
         page_size: limit,
-        page: page
-      })
+        sort_by: filters.sort_by || 'updated_at',
+        sort_order: filters.sort_order || 'desc',
+      }
+
+      if (filters.status) params.status = filters.status
+      if (filters.primary_tag_id) params.primary_tag_id = filters.primary_tag_id
+      if (filters.industry_id?.length > 0) params.industry_ids = filters.industry_id.join(',')
+      if (filters.search) params.search = filters.search
+
+      const response = await getAllBlogs(params)
 
       if (response.data.success) {
         if (page === 1) {
@@ -61,7 +68,7 @@ export default function BlogList({ page, limit, setTotalCount, setLoading, setIn
       setLoading(false)
     }
   }
-
+  
   const publishHandler = async (id) => {
     try {
       setLoadingBlogs(prev => ({ ...prev, [id]: true }))
@@ -148,7 +155,7 @@ export default function BlogList({ page, limit, setTotalCount, setLoading, setIn
   const unarchiveHandler = async (id) => {
     try {
       setLoadingBlogs(prev => ({ ...prev, [id]: true }))
-      const res = await unarchiveBlog(id, { username: localStorage.getItem('username') })
+      const res = await unpublishBlog(id, { username: localStorage.getItem('username') })
 
       if (!res?.data?.success) {
         toast.error("Failed to unarchive blog", {
@@ -256,8 +263,8 @@ export default function BlogList({ page, limit, setTotalCount, setLoading, setIn
     return (
       <div className="flex flex-col text-center py-20 w-full items-center justify-center">
         <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">No blogs yet</h2>
-        <p className="text-gray-600 mb-6">Create your first blog to get started</p>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">No blogs found</h2>
+        <p className="text-gray-600 mb-6">Try adjusting your filters or create a new blog</p>
         <Button className="w-36 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 hover:cursor-pointer hover:shadow-lg transition-all">
           <Link href="/editor/new">
             Create Blog

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import BlogList from '@/components/BlogList';
+import BlogFilters from '@/components/BlogFilters';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlusIcon } from 'lucide-react';
@@ -14,9 +15,34 @@ export default function Home() {
   const [totalCount, setTotalCount] = useState(0);   
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    status: null,
+    primary_tag_id: null,
+    industry_id: null,
+    search: '',
+    sort_by: 'updated_at',
+    sort_order: 'desc'
+  });
   const observerTarget = useRef(null);
   
   const hasMore = page * limit < totalCount;
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+    setPage(1);
+  };
+
+  const handleReset = () => {
+    setFilters({
+      status: null,
+      primary_tag_id: null,
+      industry_id: null,
+      search: '',
+      sort_by: 'updated_at',
+      sort_order: 'desc'
+    });
+    setPage(1);
+  };
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {
@@ -70,9 +96,16 @@ export default function Home() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-12">
+        <BlogFilters 
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onReset={handleReset}
+        />
+
         <BlogList 
           page={page} 
-          limit={limit} 
+          limit={limit}
+          filters={filters}
           setTotalCount={setTotalCount}
           setLoading={setLoading}
           setInitialLoading={setInitialLoading}
