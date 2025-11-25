@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { FileText, Edit, Clock, Calendar, Tag, Loader2 } from 'lucide-react'
+import { FileText, Edit, Clock, Calendar, Tag } from 'lucide-react'
 import { Button } from './ui/button'
 import { archiveBlog, getAllBlogs, publishBlog, unarchiveBlog, unpublishBlog } from '@/lib/api/blog'
 import { useSelector } from 'react-redux'
 import { toast } from 'sonner'
 
-export default function BlogList({ page, limit, setTotalCount }) {
+export default function BlogList({ page, limit, setTotalCount, setLoading }) {
   const { primaryTags, industries } = useSelector(state => state.tags)
   const [blogs, setBlogs] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [error, setError] = useState(null)
   const [loadingBlogs, setLoadingBlogs] = useState({})
 
@@ -21,6 +21,9 @@ export default function BlogList({ page, limit, setTotalCount }) {
 
   const loadBlogs = async () => {
     try {
+      if (page === 1) {
+        setInitialLoading(true)
+      }
       setLoading(true)
       setError(null)
 
@@ -32,7 +35,11 @@ export default function BlogList({ page, limit, setTotalCount }) {
       })
 
       if (response.data.success) {
-        setBlogs(response.data.data)
+        if (page === 1) {
+          setBlogs(response.data.data)
+        } else {
+          setBlogs(prev => [...prev, ...response.data.data])
+        }
         setTotalCount(response.data.total)
       } else {
         toast.error('Failed to load blogs', {
@@ -47,6 +54,7 @@ export default function BlogList({ page, limit, setTotalCount }) {
       console.error('Error loading blogs:', err)
       setError(err.response?.data?.error || 'Failed to load blogs')
     } finally {
+      setInitialLoading(false)
       setLoading(false)
     }
   }
@@ -192,7 +200,7 @@ export default function BlogList({ page, limit, setTotalCount }) {
     )
   }
 
-  if (loading) return null;
+  if (initialLoading) return null;
 
   if (error) {
     return (
@@ -251,8 +259,8 @@ export default function BlogList({ page, limit, setTotalCount }) {
               )}
             </div>
 
-            <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2 hover:text-blue-500">
-              <Link href={`/blog/${blog.slug}`}>
+            <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2 ">
+              <Link href={`/blog/${blog.slug}`} className="hover:text-blue-500 inline">
                 {blog.title}
               </Link>
             </h3>

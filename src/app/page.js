@@ -3,16 +3,21 @@
 import { useState } from 'react';
 import BlogList from '@/components/BlogList';
 import { Button } from '@/components/ui/button';
-import { PlusIcon } from 'lucide-react';
+import { PlusIcon, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { logout } from '@/lib/utils';
 
 export default function Home() {
   const [page, setPage] = useState(1);
-  const limit = 20;  
-  const [ totalCount, setTotalCount ] = useState(0);   
+  const limit = 9;  
+  const [totalCount, setTotalCount] = useState(0);   
+  const [loading, setLoading] = useState(false);
   
-  const hasNext = page * limit < totalCount;
+  const hasMore = page * limit < totalCount;
+
+  const loadMore = () => {
+    setPage(prev => prev + 1);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -30,41 +35,39 @@ export default function Home() {
               </Link>
             </Button>
 
-            <Button variant={"destructive"} onClick={logout} className={' cursor-pointer'}>
+            <Button variant={"destructive"} onClick={logout} className={'cursor-pointer'}>
               Logout
             </Button>
-
           </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-12">
-        <BlogList page={page} limit={limit} setTotalCount={setTotalCount} />
+        <BlogList 
+          page={page} 
+          limit={limit} 
+          setTotalCount={setTotalCount}
+          setLoading={setLoading}
+        />
 
-        {/* Pagination Controls */}
-        <div className="flex items-center justify-center gap-4 mt-10">
-          <Button
-            variant="outline"
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="rounded-lg"
-          >
-            Previous
-          </Button>
-
-          <span className="text-sm text-gray-600">
-            Page {page}
-          </span>
-
-          <Button
-            variant="outline"
-            disabled={!hasNext}
-            onClick={() => setPage(page + 1)}
-            className="rounded-lg"
-          >
-            Next
-          </Button>
-        </div>
+        {hasMore && (
+          <div className="flex justify-center mt-10">
+            <Button
+              onClick={loadMore}
+              disabled={loading}
+              className="px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                'Load More'
+              )}
+            </Button>
+          </div>
+        )}
       </main>
     </div>
   );
