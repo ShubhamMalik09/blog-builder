@@ -4,14 +4,15 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { FileText, Edit, Clock, Calendar, Tag } from 'lucide-react'
 import { Button } from './ui/button'
+import { Skeleton } from './ui/skeleton'
 import { archiveBlog, getAllBlogs, publishBlog, unarchiveBlog, unpublishBlog } from '@/lib/api/blog'
 import { useSelector } from 'react-redux'
 import { toast } from 'sonner'
 
-export default function BlogList({ page, limit, setTotalCount, setLoading }) {
+export default function BlogList({ page, limit, setTotalCount, setLoading, setInitialLoading }) {
   const { primaryTags, industries } = useSelector(state => state.tags)
   const [blogs, setBlogs] = useState([])
-  const [initialLoading, setInitialLoading] = useState(true)
+  const [initialLoad, setInitialLoad] = useState(true)
   const [error, setError] = useState(null)
   const [loadingBlogs, setLoadingBlogs] = useState({})
 
@@ -22,6 +23,7 @@ export default function BlogList({ page, limit, setTotalCount, setLoading }) {
   const loadBlogs = async () => {
     try {
       if (page === 1) {
+        setInitialLoad(true)
         setInitialLoading(true)
       }
       setLoading(true)
@@ -54,6 +56,7 @@ export default function BlogList({ page, limit, setTotalCount, setLoading }) {
       console.error('Error loading blogs:', err)
       setError(err.response?.data?.error || 'Failed to load blogs')
     } finally {
+      setInitialLoad(false)
       setInitialLoading(false)
       setLoading(false)
     }
@@ -200,7 +203,36 @@ export default function BlogList({ page, limit, setTotalCount, setLoading }) {
     )
   }
 
-  if (initialLoading) return null;
+  if (initialLoad) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {[...Array(9)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <Skeleton className="w-full h-48" />
+            <div className="p-6 space-y-3">
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-6 w-24" />
+              </div>
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-6 w-20" />
+              </div>
+              <Skeleton className="h-4 w-32" />
+              <div className="flex gap-2">
+                <Skeleton className="h-10 flex-1" />
+                <Skeleton className="h-10 flex-1" />
+                <Skeleton className="h-10 flex-1" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   if (error) {
     return (

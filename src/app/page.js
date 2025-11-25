@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import BlogList from '@/components/BlogList';
 import { Button } from '@/components/ui/button';
-import { PlusIcon, Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { logout } from '@/lib/utils';
 
@@ -12,12 +13,38 @@ export default function Home() {
   const limit = 9;  
   const [totalCount, setTotalCount] = useState(0);   
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const observerTarget = useRef(null);
   
   const hasMore = page * limit < totalCount;
 
-  const loadMore = () => {
-    setPage(prev => prev + 1);
-  };
+  const loadMore = useCallback(() => {
+    if (!loading && hasMore) {
+      setPage(prev => prev + 1);
+    }
+  }, [loading, hasMore]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [loadMore]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -48,26 +75,39 @@ export default function Home() {
           limit={limit} 
           setTotalCount={setTotalCount}
           setLoading={setLoading}
+          setInitialLoading={setInitialLoading}
         />
 
-        {hasMore && (
-          <div className="flex justify-center mt-10">
-            <Button
-              onClick={loadMore}
-              disabled={loading}
-              className="px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                'Load More'
-              )}
-            </Button>
+        {loading && !initialLoading && (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <Skeleton className="w-full h-48" />
+                <div className="p-6 space-y-3">
+                  <div className="flex gap-2">
+                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-6 w-24" />
+                  </div>
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-6 w-20" />
+                  </div>
+                  <Skeleton className="h-4 w-32" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-10 flex-1" />
+                    <Skeleton className="h-10 flex-1" />
+                    <Skeleton className="h-10 flex-1" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
+
+        {hasMore && <div ref={observerTarget} className="h-4" />}
       </main>
     </div>
   );

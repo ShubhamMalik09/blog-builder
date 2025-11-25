@@ -100,6 +100,7 @@ const StoredBlogEditorPage = () => {
             getBlogData={getBlogData}
             is_archived={blogData.is_archived}
             is_published={blogData.is_published}
+            slug={blogData.slug}
         />
     )
 }
