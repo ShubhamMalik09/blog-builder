@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { toast } from "sonner"
 
-export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle, initialCover, initialDescription, initialPrimaryTag, initialSecondayTags, id, is_published, is_archived, getBlogData, slug}) {
+export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle, initialCover, initialDescription, initialPrimaryTag, initialSecondayTags, id, is_published, is_archived, getBlogData, slug, setSlug}) {
   const isClient = typeof window !== "undefined";
   const router = useRouter()
   const { primaryTags, industries } = useSelector(state => state.tags);
@@ -257,9 +257,9 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
   const handleUpdateBlog = async(payload, id) => {
     try{
       const result = await updateBlog(id,payload);
-      if(result.data.success){
-        toast.success('Blog Updated Successfully')
-      }
+      if(setSlug && result.data.data.slug) {
+          setSlug(result.data.data.slug);
+        }
       else{
         toast.error('Unable to update blog', {
           description: result.data.error

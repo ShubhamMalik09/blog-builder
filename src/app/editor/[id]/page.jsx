@@ -20,6 +20,8 @@ const StoredBlogEditorPage = () => {
         { id: generateId(), type: "heading1", content: "" },
         { id: generateId(), type: "paragraph", content: "" },
     ])
+
+    const [currentSlug, setCurrentSlug] = useState('');
     
     const tagsLoaded = primaryTags.length > 0 && industries.length > 0;
 
@@ -30,6 +32,7 @@ const StoredBlogEditorPage = () => {
             const result = await getBlog(id);
             if(result.data.success){
                 setBlogData(result.data.data);
+                setCurrentSlug(result.data.data.slug)
                 const newBlocks = markdownToBlocks(result.data.data.content_markdown);
                 setBlocks(newBlocks);
             } else {
@@ -100,7 +103,8 @@ const StoredBlogEditorPage = () => {
             getBlogData={getBlogData}
             is_archived={blogData.is_archived}
             is_published={blogData.is_published}
-            slug={blogData.slug}
+            slug={currentSlug}
+            setSlug={setCurrentSlug}
         />
     )
 }
