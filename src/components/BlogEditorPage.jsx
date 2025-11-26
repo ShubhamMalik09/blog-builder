@@ -15,6 +15,7 @@ import { archiveBlog, createBlog, publishBlog, unarchiveBlog, unpublishBlog, upd
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { toast } from "sonner"
+import Image from "next/image";
 
 export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle, initialCover, initialDescription, initialPrimaryTag, initialSecondayTags, id, is_published, is_archived, getBlogData, slug, setSlug}) {
   const isClient = typeof window !== "undefined";
@@ -411,9 +412,12 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
               />
               {hydrated && coverImage ? (
                 <div className="relative w-full h-20">
-                  <img
-                    src={ isClient ? coverImage : ""}
+                  <Image
+                    src={coverImage}
                     className="w-full h-full object-cover rounded-xl border"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 400px"
+                    priority
                     alt="Cover"
                   />
 

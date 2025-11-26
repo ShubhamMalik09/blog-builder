@@ -320,7 +320,7 @@ export default function BlogList({ page, limit, filters, setTotalCount, setLoadi
                 <Tag className="w-3 h-3" />
                 {getTagName(String(blog.primary_tag_id), 'primary')}
               </span>
-              {blog.industry_ids?.slice(0, 2).map((tagId, idx) => (
+              {blog.industry_ids?.map((tagId, idx) => (
                 <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
                   {getTagName(tagId, 'industry')}
                 </span>
