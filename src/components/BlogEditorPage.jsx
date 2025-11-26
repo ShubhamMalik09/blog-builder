@@ -257,6 +257,7 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
   const handleUpdateBlog = async(payload, id) => {
     try{
       const result = await updateBlog(id,payload);
+      toast.success("Blog updated")
       if(setSlug && result.data.data.slug) {
           setSlug(result.data.data.slug);
         }

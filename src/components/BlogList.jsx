@@ -8,6 +8,8 @@ import { Skeleton } from './ui/skeleton'
 import { archiveBlog, getAllBlogs, publishBlog, unpublishBlog } from '@/lib/api/blog'
 import { useSelector } from 'react-redux'
 import { toast } from 'sonner'
+import { getUsername } from '@/lib/utils/storage'
+import Image from 'next/image'
 
 export default function BlogList({ page, limit, filters, setTotalCount, setLoading, setInitialLoading }) {
   const { primaryTags, industries } = useSelector(state => state.tags)
@@ -72,7 +74,7 @@ export default function BlogList({ page, limit, filters, setTotalCount, setLoadi
   const publishHandler = async (id) => {
     try {
       setLoadingBlogs(prev => ({ ...prev, [id]: true }))
-      const res = await publishBlog(id, { username: localStorage.getItem('username') })
+      const res = await publishBlog(id, { username: getUsername() })
 
       if (!res?.data?.success) {
         toast.error("Failed to publish blog", {
@@ -101,7 +103,7 @@ export default function BlogList({ page, limit, filters, setTotalCount, setLoadi
   const unpublishHandler = async (id) => {
     try {
       setLoadingBlogs(prev => ({ ...prev, [id]: true }))
-      const res = await unpublishBlog(id, { username: localStorage.getItem('username') })
+      const res = await unpublishBlog(id, { username: getUsername() })
 
       if (!res?.data?.success) {
         toast.error("Failed to unpublish blog", {
@@ -128,7 +130,7 @@ export default function BlogList({ page, limit, filters, setTotalCount, setLoadi
   const archiveHandler = async (id) => {
     try {
       setLoadingBlogs(prev => ({ ...prev, [id]: true }))
-      const res = await archiveBlog(id, { username: localStorage.getItem('username') })
+      const res = await archiveBlog(id, { username: getUsername() })
 
       if (!res?.data?.success) {
         toast.error("Failed to archive blog", {
@@ -155,7 +157,7 @@ export default function BlogList({ page, limit, filters, setTotalCount, setLoadi
   const unarchiveHandler = async (id) => {
     try {
       setLoadingBlogs(prev => ({ ...prev, [id]: true }))
-      const res = await unpublishBlog(id, { username: localStorage.getItem('username') })
+      const res = await unpublishBlog(id, { username: getUsername() })
 
       if (!res?.data?.success) {
         toast.error("Failed to unarchive blog", {
@@ -279,11 +281,14 @@ export default function BlogList({ page, limit, filters, setTotalCount, setLoadi
       {blogs.map((blog) => (
         <div key={blog.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 overflow-hidden">
           {blog.cover_image_url && (
-            <div className="w-full h-48 bg-gray-200">
-              <img
+            <div className="w-full h-48 bg-gray-200 relative">
+              <Image
                 src={blog?.cover_image_url}
-                alt={blog?.title}
-                className="w-full h-full object-cover"
+                alt={blog?.title || 'Blog Cover'}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-cover"
+                priority={page === 1}
               />
             </div>
           )}

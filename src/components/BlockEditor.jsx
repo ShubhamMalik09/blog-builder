@@ -1,20 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { blocksToMarkdown, markdownToBlocks } from '@/lib/markdown'
-import { Button } from './ui/button'
+import { useState, useCallback, useRef } from 'react'
 import Block from './Block'
-import { generateId, getDefaultContent } from '@/lib/utils'
-import { useRef } from 'react'
-// import { saveBlog, getBlog } from '@/lib/storage'
+import { generateId } from '@/lib/utils'
 
 export default function BlockEditor({ blogId, setBlocks, blocks }) {
   const [draggedBlock, setDraggedBlock] = useState(null)
   const [showBlockMenu, setShowBlockMenu] = useState(null)
   const containerRef = useRef(null)
 
-  const updateBlock = (id, content) => {
+  const updateBlock = useCallback((id, content) => {
     const scrollTop = containerRef.current?.scrollTop || 0
     setBlocks((prev) =>
       prev.map((b) => {
@@ -32,45 +27,44 @@ export default function BlockEditor({ blogId, setBlocks, blocks }) {
         containerRef.current.scrollTop = scrollTop
       }
     })
-  }
+  }, [setBlocks])
 
-  const deleteBlock = (id) => {
+  const deleteBlock = useCallback((id) => {
     if (blocks.length > 1) {
       setBlocks((prev) => prev.filter((b) => b.id !== id));
     }
-  }
+  }, [blocks.length, setBlocks])
 
-    const addBlock = (type, afterId) => {
-      const newBlock = {
-        id: generateId(), // 🔥 stable UUID
-        type,
-        content:
-          type === 'text-image' || type === 'image-text'
-            ? { text: '', image: '' }
-            : '',
-      };
-
-      setBlocks((prev) => {
-        const index = prev.findIndex((b) => b.id === afterId);
-        const updated = [...prev];
-        updated.splice(index + 1, 0, newBlock);
-        return updated;
-      });
-      setShowBlockMenu(null);
+  const addBlock = useCallback((type, afterId) => {
+    const newBlock = {
+      id: generateId(),
+      type,
+      content:
+        type === 'text-image' || type === 'image-text'
+          ? { text: '', image: '' }
+          : '',
     };
 
+    setBlocks((prev) => {
+      const index = prev.findIndex((b) => b.id === afterId);
+      const updated = [...prev];
+      updated.splice(index + 1, 0, newBlock);
+      return updated;
+    });
+    setShowBlockMenu(null);
+  }, [setBlocks])
 
-  const handleDragStart = (e, block) => {
+  const handleDragStart = useCallback((e, block) => {
     setDraggedBlock(block)
     e.dataTransfer.effectAllowed = 'move'
-  }
+  }, [])
 
-  const handleDragOver = (e) => {
+  const handleDragOver = useCallback((e) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
-  }
+  }, [])
 
-  const handleDrop = (e, targetBlock) => {
+  const handleDrop = useCallback((e, targetBlock) => {
     e.preventDefault();
     if (!draggedBlock || draggedBlock.id === targetBlock.id) return;
 
@@ -86,15 +80,25 @@ export default function BlockEditor({ blogId, setBlocks, blocks }) {
     });
 
     setDraggedBlock(null);
-  };
+  }, [draggedBlock, setBlocks])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 pb-54" ref={containerRef} style={{ scrollBehavior: 'auto' }}>
-
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 pb-54" ref={containerRef}>
       <main className="max-w-4xl mx-auto px-6 py-20">
         <div className="space-y-2">
           {blocks.map((block) => (
-            <Block key={block.id} block={block} deleteBlock={deleteBlock} updateBlock={updateBlock} addBlock={addBlock} showBlockMenu={showBlockMenu} setShowBlockMenu={setShowBlockMenu} handleDragOver={handleDragOver} handleDragStart={handleDragStart} handleDrop={handleDrop}/>
+            <Block 
+              key={block.id} 
+              block={block} 
+              deleteBlock={deleteBlock} 
+              updateBlock={updateBlock} 
+              addBlock={addBlock} 
+              showBlockMenu={showBlockMenu} 
+              setShowBlockMenu={setShowBlockMenu} 
+              handleDragOver={handleDragOver} 
+              handleDragStart={handleDragStart} 
+              handleDrop={handleDrop}
+            />
           ))}
         </div>
       </main>

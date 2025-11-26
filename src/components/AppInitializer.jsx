@@ -1,3 +1,4 @@
+// components/AppInitializer.jsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,6 +9,7 @@ import { useDispatch } from "react-redux";
 import { setIndustries, setPrimaryTags } from "@/store/slices/tagSlice";
 import { toast } from "sonner";
 import LoaderScreen from "./LoaderScreen";
+import { getToken, getUsername, clearAuth } from "@/lib/utils/storage";
 
 export default function AppInitializer({ children }) {
   const router = useRouter();
@@ -22,10 +24,11 @@ export default function AppInitializer({ children }) {
         return;
       }
 
-      const token = localStorage.getItem("token");
-      const username = localStorage.getItem("username");
+      const token = getToken();
+      const username = getUsername();
 
       if (!token || !username) {
+        setInitialized(true)
         router.replace("/login");
         return;
       }
@@ -33,12 +36,14 @@ export default function AppInitializer({ children }) {
       try {
         const result = await verifyToken();
         if (!result.data?.success) {
-          localStorage.clear();
+          clearAuth();
+          setInitialized(true)
           router.replace("/login");
           return;
         }
       } catch (error) {
-        localStorage.clear();
+        setInitialized(true)
+        clearAuth();
         router.replace("/login");
         return;
       }
