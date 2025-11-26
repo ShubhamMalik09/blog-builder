@@ -327,12 +327,24 @@ export default function BlogList({ page, limit, filters, setTotalCount, setLoadi
               ))}
             </div>
 
-            <div className="flex items-center gap-1 text-xs text-gray-500 mb-4">
-              <Calendar className="w-3 h-3" />
-              {blog.published_at
-                ? `Published ${new Date(blog?.published_at)?.toLocaleDateString()}`
-                : `Updated ${new Date(blog?.updated_at)?.toLocaleDateString()}`
-              }
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+              {blog.is_published ? (
+                <>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    Published {new Date(blog.published_at).toLocaleDateString()}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    Updated {new Date(blog.updated_at).toLocaleDateString()}
+                  </span>
+                </>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  Updated {new Date(blog.updated_at).toLocaleDateString()}
+                </span>
+              )}
             </div>
 
             <div className="flex gap-2">
