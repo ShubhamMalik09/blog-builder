@@ -82,7 +82,7 @@ export default function MarkdownPreview({ markdown }) {
               const src = props.src;
               if (!src) return null;
               return <img 
-                className="rounded-lg my-4 max-w-full h-auto border border-gray-200 shadow-sm"
+                className="rounded-lg my-4 max-w-md mx-auto h-auto border border-gray-200 shadow-sm"
                 src={src}
                 alt={props.alt || "image"}
               />
