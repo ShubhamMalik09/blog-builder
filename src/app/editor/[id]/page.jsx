@@ -7,37 +7,47 @@ import { generateId } from '@/lib/utils';
 import { useParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const StoredBlogEditorPage = () => {
     const { primaryTags, industries } = useSelector(state => state.tags);
     const { id } = useParams();
     const [loaded, setLoaded] = useState(false);
     const [blogData, setBlogData] = useState(null);
-    const [blocks, setBlocks ] = useState([
+    const [error, setError] = useState(null);
+    const [blocks, setBlocks] = useState([
         { id: generateId(), type: "heading1", content: "" },
         { id: generateId(), type: "paragraph", content: "" },
     ])
+
+    const [currentSlug, setCurrentSlug] = useState('');
+    
     const tagsLoaded = primaryTags.length > 0 && industries.length > 0;
 
-    const getBlogData = async() =>{
+    const getBlogData = async() => {
         setLoaded(false);
-        try{
+        setError(null);
+        try {
             const result = await getBlog(id);
             if(result.data.success){
                 setBlogData(result.data.data);
+                setCurrentSlug(result.data.data.slug)
                 const newBlocks = markdownToBlocks(result.data.data.content_markdown);
                 setBlocks(newBlocks);
-            } else{
+            } else {
+                setError(result.data.error);
                 toast.error('Error getting blog', {
                     description: result.data.error
-                })
+                });
             }
-        } catch(err){
+        } catch(err) {
+            const errorMsg = err.response?.data?.error || err.message;
+            setError(errorMsg);
             toast.error('Error getting blog', {
-              description: (err.response?.data?.error || err.message )
-            })
-            console.log('error getting data from blogid', err)
-        } finally{
+                description: errorMsg
+            });
+        } finally {
             setLoaded(true);
         }
     } 
@@ -45,46 +55,56 @@ const StoredBlogEditorPage = () => {
     useEffect(() => {
         if (!id || !tagsLoaded) return;
         getBlogData();
-
-        // const list = JSON.parse(localStorage.getItem("blogList") || "[]");
-        // const found = list.find((b) => b.id === id);
-        // if (found) {
-        //     setBlogData(found);
-        //     const newBlocks = markdownToBlocks(found.content_markdown);
-        //     if(newBlocks && newBlocks?.length > 0){
-        //         setBlocks(newBlocks);
-        //     }
-        // } else {
-        //     console.warn("Blog not found, using fallback defaults");
-        //     setBlogData(null);
-        // }
-
-        // setLoaded(true);
     }, [id, tagsLoaded]);
 
-    if (!loaded) return <p className="p-4">Loading blog...</p>;
-    else if (!blogData) {
+    if (!loaded) {
         return (
-        <BlogEditorPage
-            mode="edit"
-            initialTitle="Untitled Blog"
-            initialBlocks={blocks}
-        />
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+                <Loader2 className="w-12 h-12 text-gray-400 animate-spin mb-4" />
+                <p className="text-gray-600 font-medium">Loading blog...</p>
+            </div>
         );
     }
+    
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+                <p className="text-red-600 font-medium mb-4">Failed to load blog</p>
+                <button 
+                    onClick={getBlogData}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
+    
+    if (!blogData) {
+        return (
+            <BlogEditorPage
+                mode="edit"
+                initialTitle="Untitled Blog"
+                initialBlocks={blocks}
+            />
+        );
+    }
+    
     return (
         <BlogEditorPage
             mode="edit"
-            id = {blogData.id}
+            id={blogData.id}
             initialTitle={blogData.title}
             initialCover={blogData.cover_image_url}
             initialDescription={blogData.description}
-            initialPrimaryTag={primaryTags.find(tag => tag.id == blogData.primary_tag_id)}
+            initialPrimaryTag={primaryTags.find(tag => tag.id === blogData.primary_tag_id)}
             initialSecondayTags={industries.filter(industry => blogData.industry_ids.includes(industry.id))}
-            initialBlocks={blocks} // We'll parse below
-            getBlogData = {getBlogData}
+            initialBlocks={blocks}
+            getBlogData={getBlogData}
             is_archived={blogData.is_archived}
             is_published={blogData.is_published}
+            slug={currentSlug}
+            setSlug={setCurrentSlug}
         />
     )
 }

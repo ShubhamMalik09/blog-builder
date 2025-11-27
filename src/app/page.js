@@ -1,18 +1,71 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import BlogList from '@/components/BlogList';
+import BlogFilters from '@/components/BlogFilters';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { logout } from '@/lib/utils';
 
+const INITIAL_FILTERS = {
+  status: null,
+  primary_tag_id: null,
+  industry_id: null,
+  search: '',
+  sort_by: 'updated_at',
+  sort_order: 'desc'
+};
+
 export default function Home() {
   const [page, setPage] = useState(1);
-  const limit = 20;  
-  const [ totalCount, setTotalCount ] = useState(0);   
+  const [totalCount, setTotalCount] = useState(0);   
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [filters, setFilters] = useState(INITIAL_FILTERS);
+  const observerTarget = useRef(null);
   
-  const hasNext = page * limit < totalCount;
+  const limit = 9;
+  const hasMore = page * limit < totalCount;
+
+  const handleFilterChange = useCallback((newFilters) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+    setPage(1);
+  }, []);
+
+  const handleReset = useCallback(() => {
+    setFilters(INITIAL_FILTERS);
+    setPage(1);
+  }, []);
+
+  const loadMore = useCallback(() => {
+    if (!loading && hasMore) {
+      setPage(prev => prev + 1);
+    }
+  }, [loading, hasMore]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [loadMore]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -22,49 +75,54 @@ export default function Home() {
             Wokelo Blog Builder
           </h1>
 
-          <div className='flex items-center justify-center gap-2'>
-            <Button className="bg-black text-white hover:bg-gray-800">
-              <Link href="/editor/new" className="flex w-full gap-1 items-center">
+          <div className='flex items-center gap-2'>
+            <Button asChild className="bg-black text-white hover:bg-gray-800">
+              <Link href="/editor/new" className="flex gap-1 items-center">
                 <PlusIcon />
                 Create Blog
               </Link>
             </Button>
 
-            <Button variant={"destructive"} onClick={logout} className={' cursor-pointer'}>
+            <Button variant="destructive" onClick={logout}>
               Logout
             </Button>
-
           </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-12">
-        <BlogList page={page} limit={limit} setTotalCount={setTotalCount} />
+        <BlogFilters 
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onReset={handleReset}
+        />
 
-        {/* Pagination Controls */}
-        <div className="flex items-center justify-center gap-4 mt-10">
-          <Button
-            variant="outline"
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="rounded-lg"
-          >
-            Previous
-          </Button>
+        <BlogList 
+          page={page} 
+          limit={limit}
+          filters={filters}
+          setTotalCount={setTotalCount}
+          setLoading={setLoading}
+          setInitialLoading={setInitialLoading}
+        />
 
-          <span className="text-sm text-gray-600">
-            Page {page}
-          </span>
+        {loading && !initialLoading && (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <Skeleton className="w-full h-48" />
+                <div className="p-6 space-y-3">
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-          <Button
-            variant="outline"
-            disabled={!hasNext}
-            onClick={() => setPage(page + 1)}
-            className="rounded-lg"
-          >
-            Next
-          </Button>
-        </div>
+        {hasMore && <div ref={observerTarget} className="h-4" />}
       </main>
     </div>
   );

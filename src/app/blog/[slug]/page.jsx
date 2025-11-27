@@ -1,32 +1,52 @@
-"use client"
+"use client";
 
-import { notFound, useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { getBlogBySlug } from "@/lib/api/blog";
 import MarkdownPreview from "@/components/MarkdownPreview";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
-const GetPostBySlugPage =  () => {
+const GetPostBySlugPage = () => {
   const { slug } = useParams();
-  const [ post, setPost ] = useState(null);
+  const [post, setPost] = useState(null);
+  const [notFoundState, setNotFoundState] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const init = async() =>{
-    if(!slug) return;
-    const res = await getBlogBySlug(slug);
-    if(res.data.data){
-        setPost(res?.data?.data);
-    }
+  useEffect(() => {
+    const init = async () => {
+      if (!slug) return;
+
+      try {
+        const res = await getBlogBySlug(slug);
+
+        if (res.data?.data) {
+          setPost(res.data.data);
+        } else {
+          setNotFoundState(true);
+        }
+      } catch {
+        setNotFoundState(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    init();
+  }, [slug]);
+
+  if (loading) return null;
+
+  if (notFoundState) {
+    return (
+      <div className="py-20 text-center">
+        <h2 className="text-3xl font-bold">404 – Blog Not Found</h2>
+        <p className="text-gray-600">The blog you are looking for doesn’t exist.</p>
+      </div>
+    );
   }
 
-  useEffect(()=>{
-    init();
-  },[slug]);
-
-  if(!post) return null;
-
   return (
-    <main className="mx-auto max-w-3xl py-10">
-
-      {/* HEADER */}
+    <main className="mx-auto max-w-3xl py-10 px-4">
       <header className="mb-10">
         <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
 
@@ -50,21 +70,21 @@ const GetPostBySlugPage =  () => {
         </div>
 
         {post.cover_image_url && (
-          <img
-            src={post.cover_image_url}
-            alt={post.title}
-            className="mt-6 w-full rounded-xl border border-gray-200 object-cover"
-          />
+          <div className="relative mt-6 w-full h-96">
+            <Image
+              src={post.cover_image_url}
+              alt={post.title}
+              fill
+              priority
+              className="rounded-xl border border-gray-200 object-cover"
+            />
+          </div>
         )}
       </header>
 
-      {/* CONTENT */}
-      <MarkdownPreview
-        markdown={post.content_markdown}
-        title={post.title}
-      />
+      <MarkdownPreview markdown={post.content_markdown} title={post.title} />
     </main>
   );
-}
+};
 
 export default GetPostBySlugPage;
