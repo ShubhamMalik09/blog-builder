@@ -1,4 +1,4 @@
-import { Plus, GripVertical, Trash2 } from 'lucide-react'
+import { Plus, GripVertical, Trash2, Copy, ArrowUp, ArrowDown } from 'lucide-react'
 import React from 'react'
 import TextBlock from './Blocks/TextBlock'
 import ImageBlock from './Blocks/ImageBlock'
@@ -8,7 +8,7 @@ import TextImageBlock from './Blocks/TextImageBlock'
 import ImageTextBlock from './Blocks/ImageTextBlock'
 import BlockMenu from './BlockMenu'
 
-const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, handleDragOver, handleDrop, showBlockMenu, setShowBlockMenu }) => {
+const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, handleDragOver, handleDrop, showBlockMenu, setShowBlockMenu, duplicateBlock, moveBlockUp, moveBlockDown,isFirst, isLast }) => {
 
     const handleFormat = (command) => {
         const isTextObject = typeof block.content === "object";
@@ -26,16 +26,16 @@ const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, han
         const selected = text.substring(start, end);
 
         const formatted =
-        command === "bold"
-            ? `**${selected}**`
-            : command === "italic"
-            ? `*${selected}*`
-            : command === "code"
-            ? `\`${selected}\``
-            : selected;
+            command === "bold"
+                ? `**${selected}**`
+                : command === "italic"
+                    ? `*${selected}*`
+                    : command === "code"
+                        ? `\`${selected}\``
+                        : selected;
 
         const newText =
-        text.substring(0, start) + formatted + text.substring(end);
+            text.substring(0, start) + formatted + text.substring(end);
 
         if (isTextObject) {
             updateBlock(block.id, { text: newText });
@@ -46,41 +46,63 @@ const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, han
 
 
     const renderBlock = (block) => {
-        switch(block.type){
+        switch (block.type) {
             case "image":
-                return <ImageBlock block={block} updateBlock={updateBlock}/>
-            
+                return <ImageBlock block={block} updateBlock={updateBlock} />
+
             case "video":
                 return <VideoBlock block={block} updateBlock={updateBlock} />
-            
+
             case "text-image":
                 return <TextImageBlock block={block} updateBlock={updateBlock} />;
 
             case "image-text":
                 return <ImageTextBlock block={block} updateBlock={updateBlock} />;
-            
+
             default:
-                return <TextBlock block={block} updateBlock={updateBlock} addBlock={addBlock}/>
+                return <TextBlock block={block} updateBlock={updateBlock} addBlock={addBlock} />
         }
     }
 
-  return (
-    <div
-        key={block.id}
-        draggable
-        onDragStart={(e) => handleDragStart(e, block)}
-        onDragOver={handleDragOver}
-        onDrop={(e) => handleDrop(e, block)}
-        className="group relative"
-    >
-        <div className="flex flex-col gap-2 bg-gray-50 rounded-xl border-2 border-transparent hover:border-gray-200 transition-all duration-200 px-4 py-2 shadow-md hover:shadow-lg">
-            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity w-full justify-between"> 
-                <div className="flex gap-1">
-                    <Button size={'icon'} variant={'icon'} className="bg-transparent  hover:bg-gray-100 rounded cursor-grab active:cursor-grabbing">
-                        <GripVertical className="w-4 h-4 text-gray-400" />
-                    </Button>
-                    {
-                        (block.type !== 'image' && block.type !=='video') && (
+    return (
+        <div
+            key={block.id}
+            draggable
+            onDragStart={(e) => handleDragStart(e, block)}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, block)}
+            className="group relative"
+        >
+            <div className="flex flex-col gap-2 bg-gray-50 rounded-xl border-2 border-transparent hover:border-gray-200 transition-all duration-200 px-4 py-2 shadow-md hover:shadow-lg">
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity w-full justify-between">
+                    <div className="flex gap-1">
+                        <Button size={'icon'} variant={'icon'} className="bg-transparent hover:bg-gray-100 rounded cursor-grab active:cursor-grabbing">
+                            <GripVertical className="w-4 h-4 text-gray-400" />
+                        </Button>
+
+                        <Button
+                            onClick={() => moveBlockUp(block.id)}
+                            disabled={isFirst}
+                            size={'icon'}
+                            variant={'icon'}
+                            className="bg-transparent hover:bg-gray-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Move Up"
+                        >
+                            <ArrowUp className="w-4 h-4 text-gray-600" />
+                        </Button>
+
+                        <Button
+                            onClick={() => moveBlockDown(block.id)}
+                            disabled={isLast}
+                            size={'icon'}
+                            variant={'icon'}
+                            className="bg-transparent hover:bg-gray-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Move Down"
+                        >
+                            <ArrowDown className="w-4 h-4 text-gray-600" />
+                        </Button>
+
+                        {(block.type !== 'image' && block.type !== 'video') && (
                             <>
                                 <button
                                     onClick={() => handleFormat('bold')}
@@ -104,45 +126,54 @@ const Block = ({ block, deleteBlock, addBlock, updateBlock, handleDragStart, han
                                     &lt;&gt;
                                 </button>
                             </>
-                        )
-                    }
-                    
-                </div>
+                        )}
+                    </div>
 
-                <span className='text-sm text-black'>
-                    {block.type}
-                </span>
-                <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                        onClick={() => deleteBlock(block.id)}
-                        className="p-1 hover:bg-red-50 rounded text-red-500"
-                        title="Delete"
-                        size={'icon'}
-                        variant={'icon'}
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <span className='text-sm text-black'>
+                        {block.type}
+                    </span>
+
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                            onClick={() => duplicateBlock(block.id)}
+                            className="p-1 hover:bg-blue-50 rounded text-blue-600"
+                            title="Duplicate"
+                            size={'icon'}
+                            variant={'icon'}
+                        >
+                            <Copy className="w-4 h-4" />
+                        </Button>
+
+                        <Button
+                            onClick={() => deleteBlock(block.id)}
+                            className="p-1 hover:bg-red-50 rounded text-red-500"
+                            title="Delete"
+                            size={'icon'}
+                            variant={'icon'}
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </div>
+                <div className="w-full block whitespace-normal">
+                    {renderBlock(block)}
                 </div>
             </div>
-            <div className="w-full block whitespace-normal">
-                {renderBlock(block)}
+
+            <div className="relative -mt-2 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                    onClick={() => setShowBlockMenu(showBlockMenu === block.id ? null : block.id)}
+                    className="absolute bg-white border-2 border-gray-200 rounded-full p-1 hover:border-blue-500 hover:bg-blue-50 transition-all"
+                >
+                    <Plus className="w-4 h-4 text-gray-600" />
+                </button>
+
+                {showBlockMenu === block.id && (
+                    <BlockMenu block={block} addBlock={addBlock} />
+                )}
             </div>
         </div>
-
-        <div className="relative -mt-2 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-                onClick={() => setShowBlockMenu(showBlockMenu === block.id ? null : block.id)}
-                className="absolute bg-white border-2 border-gray-200 rounded-full p-1 hover:border-blue-500 hover:bg-blue-50 transition-all"
-            >
-                <Plus className="w-4 h-4 text-gray-600" />
-            </button>
-
-            {showBlockMenu === block.id && (
-                <BlockMenu block={block} addBlock={addBlock}/>
-            )}
-        </div>
-    </div>
-  )
+    )
 }
 
 export default Block

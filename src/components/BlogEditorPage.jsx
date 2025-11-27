@@ -13,6 +13,7 @@ import { archiveBlog, createBlog, publishBlog, unarchiveBlog, unpublishBlog, upd
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { toast } from "sonner";
+import AutoSaveIndicator from "@/components/AutoSaveIndicator";
 
 export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle, initialCover, initialDescription, initialPrimaryTag, initialSecondayTags, id, is_published, is_archived, getBlogData, slug, setSlug}) {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('idle');
   const [blocks, setBlocks] = useState(initialBlocks);
   const [loading, setLoading] = useState(true);
   const blocksRef = useRef(blocks);
@@ -46,6 +48,34 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
   useEffect(() => { blocksRef.current = blocks }, [blocks]);
   useEffect(() => setHydrated(true), []);
 
+  // Debounced save on changes
+  useEffect(() => {
+    if (mode !== "new") return;
+
+    const timeoutId = setTimeout(() => {
+      const draft = {
+        title: titleRef.current,
+        coverImage: coverRef.current,
+        description: descRef.current,
+        selectedPrimary: primaryRef.current,
+        selectedSecondary: secondaryRef.current,
+        blocks: blocksRef.current
+      };
+
+      const lastDraft = localStorage.getItem("blog-draft");
+      const newDraft = JSON.stringify(draft);
+      
+      if (lastDraft !== newDraft) {
+        localStorage.setItem("blog-draft", newDraft);
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timeoutId);
+  }, [mode, title, coverImage, description, selectedPrimary, selectedSecondary, blocks]);
+
+  // Periodic backup every 60s
   useEffect(() => {
     if (mode !== "new") return;
 
@@ -59,8 +89,13 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
         blocks: blocksRef.current
       };
 
-      localStorage.setItem("blog-draft", JSON.stringify(draft));
-    }, 5000);
+      const lastDraft = localStorage.getItem("blog-draft");
+      const newDraft = JSON.stringify(draft);
+      
+      if (lastDraft !== newDraft) {
+        localStorage.setItem("blog-draft", newDraft);
+      }
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [mode]);
@@ -287,6 +322,8 @@ export default function BlogEditorPage({ initialBlocks, mode='new', initialTitle
             </h1>
             
             <div className="flex gap-3 items-center">
+              {mode === "new" && <AutoSaveIndicator status={saveStatus} />}
+              
               <Sheet open={detailsOpen} onOpenChange={setDetailsOpen}>
                 <SheetTrigger asChild>
                   <Button variant="outline" className="relative">

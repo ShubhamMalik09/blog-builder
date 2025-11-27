@@ -82,6 +82,48 @@ export default function BlockEditor({ blogId, setBlocks, blocks }) {
     setDraggedBlock(null);
   }, [draggedBlock, setBlocks])
 
+  const duplicateBlock = useCallback((id) => {
+  setBlocks((prev) => {
+    const index = prev.findIndex((b) => b.id === id);
+    const blockToDuplicate = prev[index];
+    
+    const newBlock = {
+      ...blockToDuplicate,
+      id: generateId(),
+      // Deep copy content if it's an object
+      content: typeof blockToDuplicate.content === 'object' 
+        ? { ...blockToDuplicate.content } 
+        : blockToDuplicate.content
+    };
+    
+    const updated = [...prev];
+    updated.splice(index + 1, 0, newBlock);
+    return updated;
+  });
+}, [setBlocks]);
+
+const moveBlockUp = useCallback((id) => {
+  setBlocks((prev) => {
+    const index = prev.findIndex((b) => b.id === id);
+    if (index === 0) return prev; // Already at top
+    
+    const updated = [...prev];
+    [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
+    return updated;
+  });
+}, [setBlocks]);
+
+const moveBlockDown = useCallback((id) => {
+  setBlocks((prev) => {
+    const index = prev.findIndex((b) => b.id === id);
+    if (index === prev.length - 1) return prev; // Already at bottom
+    
+    const updated = [...prev];
+    [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
+    return updated;
+  });
+}, [setBlocks]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 pb-54" ref={containerRef}>
       <main className="max-w-4xl mx-auto px-6 py-20">
@@ -93,6 +135,11 @@ export default function BlockEditor({ blogId, setBlocks, blocks }) {
               deleteBlock={deleteBlock} 
               updateBlock={updateBlock} 
               addBlock={addBlock} 
+              duplicateBlock={duplicateBlock}
+              moveBlockUp={moveBlockUp}
+              moveBlockDown={moveBlockDown}
+              isFirst={blocks[0].id === block.id}
+              isLast={blocks[blocks.length - 1].id === block.id}
               showBlockMenu={showBlockMenu} 
               setShowBlockMenu={setShowBlockMenu} 
               handleDragOver={handleDragOver} 
