@@ -1,82 +1,145 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { uploadMedia } from "@/lib/api/uploadMedia";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import  Cropper  from "react-cropper";
+import "react-cropper/node_modules/cropperjs/dist/cropper.css";
 
 export default function ImageModal({ open, onClose, onSelect }) {
   const IMAGE_SIZE_IN_MB = 5;
   const MAX_FILE_SIZE = IMAGE_SIZE_IN_MB * 1024 * 1024;
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [imageSrc, setImageSrc] = useState(null);
+  const cropperRef = useRef(null);
 
-  const handleUpload = async (file) => {
+  const handleFileSelect = (file) => {
     if (file.size > MAX_FILE_SIZE) {
       toast.error("File too large", {
-        description: `Maximum allowed size is ${IMAGE_SIZE_IN_MB}MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`,
+        description: `Maximum allowed size is ${IMAGE_SIZE_IN_MB}MB.`,
       });
       return;
     }
-    
+
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setImageSrc(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleUpload = async () => {
+    const cropper = cropperRef.current?.cropper;
+    if (!cropper) return;
+
     setIsUploading(true);
     setUploadProgress(0);
     
     try {
-      const result = await uploadMedia(file, (progress) => {
-        setUploadProgress(progress);
-      });
-      
-      if(result.data.success){
-        onSelect(result.data.data.url);
-        onClose();
-        setUploadProgress(0);
-      } else{
-        toast.error("Upload failed", {
-          description: result.data.error
+      cropper.getCroppedCanvas().toBlob(async (blob) => {
+        const croppedFile = new File([blob], selectedFile.name, { type: "image/jpeg" });
+        
+        const result = await uploadMedia(croppedFile, (progress) => {
+          setUploadProgress(progress);
         });
-      }
-    } catch(error){
+        
+        if (result.data.success) {
+          onSelect(result.data.data.url);
+          onClose();
+          resetState();
+        } else {
+          toast.error("Upload failed", { description: result.data.error });
+        }
+        setIsUploading(false);
+      }, "image/png");
+    } catch (error) {
       console.error(error);
-      toast.error("Upload failed", {
-        description: error.message
-      });
-    } finally{
+      toast.error("Upload failed", { description: error.message });
       setIsUploading(false);
     }
   };
 
+  const resetState = () => {
+    setImageSrc(null);
+    setSelectedFile(null);
+    setUploadProgress(0);
+  };
+
+  const setAspectRatio = (ratio) => {
+    cropperRef.current?.cropper.setAspectRatio(ratio);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={() => { onClose(); resetState(); }}>
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Select Image</DialogTitle>
+          <DialogTitle>Select & Edit Image</DialogTitle>
+          <p className="text-xs text-muted-foreground">
+            Tip: use your mouse wheel or trackpad to zoom
+          </p>
+
         </DialogHeader>
 
-        <div className="space-y-2">
-          <div className="border-t pt-4">
-            <label className="text-sm font-medium">Upload Image</label>
-
-            <label className="cursor-pointer mt-2 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 p-4 rounded-lg hover:bg-gray-50">
-              <span>{isUploading ? "Uploading..." : "Click to Upload"}</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                disabled={isUploading}
-                onChange={(e) => handleUpload(e.target.files[0])}
+        {!imageSrc ? (
+          <label className="cursor-pointer flex flex-col items-center justify-center border-2 border-dashed border-gray-300 p-8 rounded-lg hover:bg-gray-50">
+            <span>Click to Upload</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleFileSelect(e.target.files[0])}
+            />
+          </label>
+        ) : (
+          <div className="space-y-4">
+            <div className="w-full h-96">
+              <Cropper
+                src={imageSrc}
+                ref={cropperRef}
+                style={{ height: "100%", width: "100%" }}
+                aspectRatio={NaN}
+                guides={true}
+                viewMode={1}
+                dragMode="move"
+                background={false}
+                responsive={true}
+                autoCropArea={1}
+                checkOrientation={false}
+                zoomable={true}
+                zoomOnWheel={true}
               />
-            </label>
-            
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Aspect Ratio</label>
+              <div className="flex gap-2 mt-2 flex-wrap">
+                <Button size="sm" variant="outline" onClick={() => setAspectRatio(16/9)}>16:9</Button>
+                <Button size="sm" variant="outline" onClick={() => setAspectRatio(4/3)}>4:3</Button>
+                <Button size="sm" variant="outline" onClick={() => setAspectRatio(1)}>1:1</Button>
+                <Button size="sm" variant="outline" onClick={() => setAspectRatio(9/16)}>9:16</Button>
+                <Button size="sm" variant="outline" onClick={() => setAspectRatio(NaN)}>Free</Button>
+              </div>
+            </div>
+
             {isUploading && (
-              <div className="mt-4 space-y-2">
-                <Progress value={uploadProgress} className="w-full" />
+              <div className="space-y-2">
+                <Progress value={uploadProgress} />
                 <p className="text-sm text-center text-gray-600">{uploadProgress}%</p>
               </div>
             )}
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={resetState} disabled={isUploading}>Cancel</Button>
+              <Button onClick={handleUpload} disabled={isUploading} className="flex-1">
+                {isUploading ? "Uploading..." : "Upload"}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );

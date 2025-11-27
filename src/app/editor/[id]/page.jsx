@@ -5,7 +5,7 @@ import { getBlog } from '@/lib/api/blog';
 import { markdownToBlocks } from '@/lib/markdown';
 import { generateId } from '@/lib/utils';
 import { useParams } from 'next/navigation';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useSelector } from 'react-redux';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,7 +25,7 @@ const StoredBlogEditorPage = () => {
     
     const tagsLoaded = primaryTags.length > 0 && industries.length > 0;
 
-    const getBlogData = async() => {
+    const getBlogData = useCallback(async() => {
         setLoaded(false);
         setError(null);
         try {
@@ -50,12 +50,12 @@ const StoredBlogEditorPage = () => {
         } finally {
             setLoaded(true);
         }
-    } 
+    }, [id])
 
     useEffect(() => {
         if (!id || !tagsLoaded) return;
         getBlogData();
-    }, [id, tagsLoaded]);
+    }, [id, tagsLoaded, getBlogData]);
 
     if (!loaded) {
         return (
@@ -86,6 +86,7 @@ const StoredBlogEditorPage = () => {
                 mode="edit"
                 initialTitle="Untitled Blog"
                 initialBlocks={blocks}
+                setBlocks={setBlocks}
             />
         );
     }
@@ -100,6 +101,7 @@ const StoredBlogEditorPage = () => {
             initialPrimaryTag={primaryTags.find(tag => tag.id === blogData.primary_tag_id)}
             initialSecondayTags={industries.filter(industry => blogData.industry_ids.includes(industry.id))}
             initialBlocks={blocks}
+            setBlocks={setBlocks}
             getBlogData={getBlogData}
             is_archived={blogData.is_archived}
             is_published={blogData.is_published}

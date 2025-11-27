@@ -4,7 +4,6 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from "rehype-raw";
 
-
 export default function MarkdownPreview({ markdown }) {
   return (
     <div className="p-8">
@@ -23,8 +22,8 @@ export default function MarkdownPreview({ markdown }) {
           td {
             border: none;
             width: 50%;
-            vertical-align: middle;       /* CENTER CONTENT VERTICALLY */
-            text-align: center;           /* CENTER INLINE TEXT/IMAGES */
+            vertical-align: middle;
+            text-align: center;
           }
 
           td img {
@@ -35,7 +34,6 @@ export default function MarkdownPreview({ markdown }) {
             margin-right: auto;
           }
 
-          /* MOBILE — stack columns */
           @media (max-width: 768px) {
             table {
               display: block;
@@ -65,10 +63,8 @@ export default function MarkdownPreview({ markdown }) {
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]} 
           urlTransform={(url) => {
-            // Allow base64 image URLs
             if (url.startsWith("data:image/")) return url;
             if (url.startsWith("data:video/")) return url;
-            // Default behavior for everything else
             return url;
           }}
           components={{
@@ -83,21 +79,21 @@ export default function MarkdownPreview({ markdown }) {
               <td className="align-top" {...props} />
             ),
             img: ({node, ...props}) => {
-                const src = props.src;
-                if (!src) return null;
-                return <img 
-                    className="rounded-lg my-4 max-w-full h-auto border border-gray-200 shadow-sm"
-                    src={src}
-                    alt={props.alt || "image"}
-                />
+              const src = props.src;
+              if (!src) return null;
+              return <img 
+                className="rounded-lg my-4 max-w-md mx-auto h-auto border border-gray-200 shadow-sm"
+                src={src}
+                alt={props.alt || "image"}
+              />
             },
             video: ({node, ...props}) => {
-                if (!props.src) return null;
-                return <video
-                    className="rounded-xl max-w-full"
-                    controls
-                    {...props}
-                />
+              if (!props.src) return null;
+              return <video
+                className="rounded-xl max-w-full"
+                controls
+                {...props}
+              />
             },
             h1: ({node, ...props}) => <h1 className="text-4xl font-bold mt-6 mb-4 text-gray-900" {...props} />,
             h2: ({node, ...props}) => <h2 className="text-3xl font-bold mt-6 mb-4 text-gray-900" {...props} />,
